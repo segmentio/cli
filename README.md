@@ -1,4 +1,4 @@
-# cli
+# cli [![GoDoc](https://godoc.org/github.com/segmentio/cli?status.svg)](https://godoc.org/github.com/segmentio/cli) 
 
 Go package providing high-level constructs for command-line tools.
 

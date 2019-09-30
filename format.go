@@ -22,7 +22,7 @@ type Flusher interface {
 	Flush()
 }
 
-// PrintCloser is an interface implemented by printers that may buffer content
+// PrintFlusher is an interface implemented by printers that may buffer content
 // until they are flushed.
 type PrintFlusher interface {
 	Printer
