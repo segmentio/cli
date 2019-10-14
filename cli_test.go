@@ -432,3 +432,22 @@ func ExampleCommandSet_help() {
 	// Options:
 	//   -h, --help  Show this help message
 }
+
+func ExampleCommand_spacesInFlag() {
+	type config struct {
+		String string `flag:"-f, --flag" default:"-"`
+	}
+
+	cmd := cli.Command(func(config config) {
+		fmt.Println(config.String)
+	})
+
+	cli.Call(cmd)
+
+	cli.Call(cmd, "-f=short")
+	cli.Call(cmd, "--flag", "hello world")
+
+	// Output:
+	// short
+	// hello world
+}

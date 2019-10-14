@@ -61,6 +61,7 @@ func makeStructDecoder(t reflect.Type) (parser, structDecoder, string) {
 		decoder := makeStructFieldDecoder(field)
 
 		for i, flag := range field.flags {
+			flag = strings.TrimSpace(flag)
 			if _, exists := p.aliases[flag]; exists {
 				panic("repeated flag in configuration struct: " + flag)
 			}
@@ -70,7 +71,7 @@ func makeStructDecoder(t reflect.Type) (parser, structDecoder, string) {
 			}
 
 			if n := len(field.flags) - 1; i < n {
-				p.aliases[flag] = field.flags[n]
+				p.aliases[flag] = strings.TrimSpace(field.flags[n])
 			} else {
 				p.options[flag] = option{boolean: boolean}
 				s[flag] = decoder
