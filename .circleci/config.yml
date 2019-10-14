@@ -5,6 +5,6 @@ jobs:
       - image: circleci/golang
     steps:
       - checkout
-      - run: go get -v -t ./...
-      - run: go vet ./...
-      - run: go test -v -race ./...
+      - run: go get -v -t
+      - run: go vet
+      - run: go test -v -race
