@@ -166,7 +166,7 @@ func ExampleCommand_time() {
 	}
 
 	cmd := cli.Command(func(config config) {
-		fmt.Println(config.Time.UTC())
+		fmt.Println(config.Time.Unix())
 	})
 
 	cli.Call(cmd)
@@ -176,11 +176,11 @@ func ExampleCommand_time() {
 	cli.Call(cmd, "--flag", "Mon, 02 Jan 2006 15:04:05 PST")
 
 	// Output:
-	// 0001-01-01 00:00:00 +0000 UTC
-	// 2006-01-02 15:04:05 +0000 UTC
-	// 2006-01-02 15:04:05 +0000 UTC
-	// 2006-01-02 15:04:05 +0000 UTC
-	// 2006-01-02 15:04:05 +0000 UTC
+	//-62135596800
+	//1136214245
+	//1136214245
+	//1136214245
+	//1136214245
 }
 
 func ExampleCommand_slice() {
