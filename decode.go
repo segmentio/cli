@@ -56,7 +56,7 @@ func makeStructDecoder(t reflect.Type) (parser, structDecoder, string) {
 		},
 	}
 
-	forEachStructField(t, func(field structField) {
+	forEachStructField(t, nil, func(field structField) {
 		boolean := field.isBoolean()
 		decoder := makeStructFieldDecoder(field)
 
@@ -110,20 +110,24 @@ func makeStructFieldDecoder(f structField) structFieldDecoder {
 	}
 }
 
-func forEachStructField(t reflect.Type, do func(structField)) {
+func forEachStructField(t reflect.Type, index []int, do func(structField)) {
 	for i, n := 0, t.NumField(); i < n; i++ {
 		f := t.Field(i)
+
+		fieldIndex := make([]int, 0, len(index)+len(f.Index))
+		fieldIndex = append(fieldIndex, index...)
+		fieldIndex = append(fieldIndex, f.Index...)
+
+		if f.Anonymous {
+			forEachStructField(f.Type, fieldIndex, do)
+			continue
+		}
 
 		if f.PkgPath != "" { // unexported
 			continue
 		}
 
 		if f.Name == "_" {
-			continue
-		}
-
-		if f.Anonymous {
-			forEachStructField(f.Type, do)
 			continue
 		}
 
@@ -149,7 +153,7 @@ func forEachStructField(t reflect.Type, do func(structField)) {
 
 		do(structField{
 			typ:     f.Type,
-			index:   f.Index,
+			index:   fieldIndex,
 			envvars: envvars,
 			flags:   flags,
 			help:    f.Tag.Get("help"),
