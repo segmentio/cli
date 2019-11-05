@@ -41,6 +41,7 @@ func Exec(cmd Function) {
 	ExecContext(context.Background(), cmd)
 }
 
+// ExecContext calls Exec but with a specified context.Context.
 func ExecContext(ctx context.Context, cmd Function) {
 	name := filepath.Base(os.Args[0])
 	args := os.Args[1:]
@@ -70,6 +71,7 @@ func Call(cmd Function, args ...string) int {
 	return CallContext(context.TODO(), cmd, args...)
 }
 
+// CallContext calls Call but with a specified context.Context.
 func CallContext(ctx context.Context, cmd Function, args ...string) int {
 	prefix := strings.ToUpper(snakecase(nameOf(cmd)))
 
