@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -308,6 +309,50 @@ func ExampleCommand_with_sub_command() {
 
 	cli.Call(cmd, "--", "curl", "https://segment.com")
 	// Output: [curl https://segment.com]
+}
+
+func ExampleCommand_context() {
+	ctx := context.Background()
+
+	cmd := cli.Command(func(ctx context.Context) {
+		if ctx == context.TODO() {
+			fmt.Println("context.TODO()")
+		} else {
+			fmt.Println("context.Background()")
+		}
+	})
+
+	cli.Call(cmd)
+	cli.CallContext(ctx, cmd)
+	// Output:
+	// context.TODO()
+	// context.Background()
+}
+
+func ExampleCommand_context_config() {
+	ctx := context.TODO()
+
+	type config struct{}
+
+	cmd := cli.Command(func(ctx context.Context, config config) {
+		fmt.Println("hello world")
+	})
+
+	cli.CallContext(ctx, cmd)
+	// Output: hello world
+}
+
+func ExampleCommand_context_args() {
+	ctx := context.TODO()
+
+	type config struct{}
+
+	cmd := cli.Command(func(ctx context.Context, config config, args []string) {
+		fmt.Println(args)
+	})
+
+	cli.CallContext(ctx, cmd, "hello", "world")
+	// Output: [hello world]
 }
 
 func ExampleCommandSet() {

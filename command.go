@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"reflect"
@@ -105,6 +106,7 @@ type CommandFunc struct {
 	options  structDecoder
 	values   []decodeFunc
 	variadic bool
+	context  bool
 	help     string
 }
 
@@ -120,23 +122,35 @@ func (cmd *CommandFunc) configure() {
 		panic("cli.Command: expected a function as argument but got " + t.String())
 	}
 
+	ctxType := reflect.TypeOf((*context.Context)(nil)).Elem()
+
 	cmd.function = v
 	cmd.variadic = t.IsVariadic()
 
 	if n := t.NumIn(); n == 0 {
 		cmd.parser, cmd.options, cmd.help = makeStructDecoder(emptyType)
 	} else {
-		if f := t.In(0); f.Kind() == reflect.Struct {
-			cmd.parser, cmd.options, cmd.help = makeStructDecoder(f)
-		} else {
-			panic("cli.Command: expected a struct as first argument but got " + f.String())
+		x := 0
+
+		if f := t.In(x); f.Kind() == reflect.Interface && f.Implements(ctxType) {
+			cmd.context = true
+			x++
+		}
+
+		if x < n {
+			if f := t.In(x); f.Kind() == reflect.Struct {
+				cmd.parser, cmd.options, cmd.help = makeStructDecoder(f)
+				x++
+			} else {
+				panic("cli.Command: expected a struct as first argument but got " + f.String())
+			}
 		}
 
 		if cmd.variadic {
 			n--
 		}
 
-		for i := 1; i < n; i++ {
+		for i := x; i < n; i++ {
 			p := t.In(i)
 
 			if p.Kind() == reflect.Slice {
@@ -170,7 +184,7 @@ func (cmd *CommandFunc) configure() {
 // Call satisfies the Function interface.
 //
 // See Command for the full documentation of how the Call method behaves.
-func (cmd *CommandFunc) Call(args, env []string) (int, error) {
+func (cmd *CommandFunc) Call(ctx context.Context, args, env []string) (int, error) {
 	cmd.configure()
 
 	options, values, command, err := cmd.parser.parseCommandLine(args)
@@ -207,29 +221,41 @@ func (cmd *CommandFunc) Call(args, env []string) (int, error) {
 
 	var params []reflect.Value
 
-	if t := cmd.function.Type(); t.NumIn() > 0 {
-		// Configuration options are decoded into the first function parameter.
-		v := reflect.New(t.In(0)).Elem()
-		if err := cmd.options.decode(v, options); err != nil {
-			return 1, err
-		}
-		params = append(params, v)
+	x := 0
 
+	if cmd.context {
+		params = append(params, reflect.ValueOf(ctx))
+		x++
+	} else if ctx != context.TODO() {
+		panic("mixing usage of context aware and unaware commands")
+	}
+
+	if t := cmd.function.Type(); t.NumIn() > 0 {
 		// Positional arguments are decoded into each following function
 		// parameter, until a slice type is encountered which receives all
 		// the remaining values.
 		n := t.NumIn()
 
+		if x < n {
+			// Configuration options are decoded into the first function parameter.
+			v := reflect.New(t.In(x)).Elem()
+			if err := cmd.options.decode(v, options); err != nil {
+				return 1, err
+			}
+			params = append(params, v)
+			x++
+		}
+
 		if cmd.variadic {
 			n--
 		}
 
-		for i := 1; i < n; i++ {
+		for i := x; i < n; i++ {
 			p := t.In(i)
 			v := reflect.New(p).Elem()
 
 			if p.Kind() == reflect.Slice {
-				if err := cmd.values[i-1](v, values); err != nil {
+				if err := cmd.values[i-x](v, values); err != nil {
 					return 1, err
 				}
 				params = append(params, v)
@@ -240,11 +266,11 @@ func (cmd *CommandFunc) Call(args, env []string) (int, error) {
 			if len(values) == 0 {
 				return 1, &Usage{
 					Cmd: cmd,
-					Err: fmt.Errorf("expected %d positional arguments but only %d were given", len(cmd.values), i-1),
+					Err: fmt.Errorf("expected %d positional arguments but only %d were given", len(cmd.values), i-x),
 				}
 			}
 
-			if err := cmd.values[i-1](v, values[:1]); err != nil {
+			if err := cmd.values[i-x](v, values[:1]); err != nil {
 				return 1, err
 			}
 			params = append(params, v)
@@ -464,7 +490,7 @@ type CommandSet map[string]Function
 // and a usage error if the first argument did not match any sub-command.
 //
 // Call satisfies the Function interface.
-func (cmds CommandSet) Call(args, env []string) (int, error) {
+func (cmds CommandSet) Call(ctx context.Context, args, env []string) (int, error) {
 	for _, cmd := range cmds {
 		if c, ok := cmd.(interface{ configure() }); ok {
 			c.configure()
@@ -494,7 +520,7 @@ func (cmds CommandSet) Call(args, env []string) (int, error) {
 
 	cmd := NamedCommand(a, c)
 
-	code, err := cmd.Call(args[1:], env)
+	code, err := cmd.Call(ctx, args[1:], env)
 	switch e := err.(type) {
 	case *Help:
 		e.Cmd = cmd
@@ -546,8 +572,8 @@ type namedCommand struct {
 	cmd  Function
 }
 
-func (c namedCommand) Call(args, env []string) (int, error) {
-	code, err := c.cmd.Call(args, env)
+func (c namedCommand) Call(ctx context.Context, args, env []string) (int, error) {
+	code, err := c.cmd.Call(ctx, args, env)
 	switch e := err.(type) {
 	case *Help:
 		e.Cmd = NamedCommand(c.name, e.Cmd)

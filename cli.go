@@ -2,6 +2,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -20,7 +21,7 @@ var Err io.Writer = os.Stderr
 // Functions returns a status code intended to be the exit code of the program
 // that called them as well as a non-nil error if the function call failed.
 type Function interface {
-	Call(args, env []string) (int, error)
+	Call(ctx context.Context, args, env []string) (int, error)
 }
 
 // Exec delegate the program execution to cmd, then exits with the code returned
@@ -37,10 +38,15 @@ type Function interface {
 //
 // The Exec function never returns.
 func Exec(cmd Function) {
+	ExecContext(context.TODO(), cmd)
+}
+
+// ExecContext calls Exec but with a specified context.Context.
+func ExecContext(ctx context.Context, cmd Function) {
 	name := filepath.Base(os.Args[0])
 	args := os.Args[1:]
 	prog := NamedCommand(name, cmd)
-	os.Exit(Call(prog, args...))
+	os.Exit(CallContext(ctx, prog, args...))
 }
 
 // Call calls cmd with args and environment variables prefixed with the
@@ -62,9 +68,14 @@ func Exec(cmd Function) {
 //	}
 //
 func Call(cmd Function, args ...string) int {
+	return CallContext(context.TODO(), cmd, args...)
+}
+
+// CallContext calls Call but with a specified context.Context.
+func CallContext(ctx context.Context, cmd Function, args ...string) int {
 	prefix := strings.ToUpper(snakecase(nameOf(cmd)))
 
-	code, err := cmd.Call(args, environ(prefix))
+	code, err := cmd.Call(ctx, args, environ(prefix))
 
 	switch err.(type) {
 	case nil:
