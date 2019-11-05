@@ -496,3 +496,29 @@ func ExampleCommand_spacesInFlag() {
 	// short
 	// hello world
 }
+
+func ExampleCommand_embedded_struct() {
+	type embed struct {
+		AnotherString string `flag:"--another-string" default:"b"`
+	}
+
+	type config struct {
+		String string `flag:"--string" default:"a"`
+		embed
+	}
+
+	cmd := cli.Command(func(config config) {
+		fmt.Println(config.String, config.AnotherString)
+	})
+
+	cli.Call(cmd)
+	cli.Call(cmd, "--string", "A")
+	cli.Call(cmd, "--another-string", "B")
+	cli.Call(cmd, "--string", "A", "--another-string", "B")
+
+	// Output:
+	// a b
+	// A b
+	// a B
+	// A B
+}
