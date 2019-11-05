@@ -312,14 +312,21 @@ func ExampleCommand_with_sub_command() {
 }
 
 func ExampleCommand_context() {
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	cmd := cli.Command(func(ctx context.Context) {
-		fmt.Println("hello world")
+		if ctx == context.TODO() {
+			fmt.Println("context.TODO()")
+		} else {
+			fmt.Println("context.Background()")
+		}
 	})
 
+	cli.Call(cmd)
 	cli.CallContext(ctx, cmd)
-	// Output: hello world
+	// Output:
+	// context.TODO()
+	// context.Background()
 }
 
 func ExampleCommand_context_config() {
