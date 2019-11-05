@@ -10,8 +10,6 @@ import (
 )
 
 func ExampleCommand_bool() {
-	ctx := context.TODO()
-
 	type config struct {
 		Bool bool `flag:"-f,--flag"`
 	}
@@ -20,13 +18,13 @@ func ExampleCommand_bool() {
 		fmt.Println(config.Bool)
 	})
 
-	cli.Call(ctx, cmd)
-	cli.Call(ctx, cmd, "-f")
-	cli.Call(ctx, cmd, "--flag")
-	cli.Call(ctx, cmd, "-f=false")
-	cli.Call(ctx, cmd, "--flag=false")
-	cli.Call(ctx, cmd, "-f=true")
-	cli.Call(ctx, cmd, "--flag=true")
+	cli.Call(cmd)
+	cli.Call(cmd, "-f")
+	cli.Call(cmd, "--flag")
+	cli.Call(cmd, "-f=false")
+	cli.Call(cmd, "--flag=false")
+	cli.Call(cmd, "-f=true")
+	cli.Call(cmd, "--flag=true")
 
 	// Output:
 	// false
@@ -39,8 +37,6 @@ func ExampleCommand_bool() {
 }
 
 func ExampleCommand_int() {
-	ctx := context.TODO()
-
 	type config struct {
 		Int int `flag:"-f,--flag" default:"-"`
 	}
@@ -49,11 +45,11 @@ func ExampleCommand_int() {
 		fmt.Println(config.Int)
 	})
 
-	cli.Call(ctx, cmd)
-	cli.Call(ctx, cmd, "-f=1")
-	cli.Call(ctx, cmd, "--flag=2")
-	cli.Call(ctx, cmd, "-f", "3")
-	cli.Call(ctx, cmd, "--flag", "4")
+	cli.Call(cmd)
+	cli.Call(cmd, "-f=1")
+	cli.Call(cmd, "--flag=2")
+	cli.Call(cmd, "-f", "3")
+	cli.Call(cmd, "--flag", "4")
 
 	// Output:
 	// 0
@@ -64,8 +60,6 @@ func ExampleCommand_int() {
 }
 
 func ExampleCommand_uint() {
-	ctx := context.TODO()
-
 	type config struct {
 		Uint uint `flag:"-f,--flag" default:"-"`
 	}
@@ -74,11 +68,11 @@ func ExampleCommand_uint() {
 		fmt.Println(config.Uint)
 	})
 
-	cli.Call(ctx, cmd)
-	cli.Call(ctx, cmd, "-f=1")
-	cli.Call(ctx, cmd, "--flag=2")
-	cli.Call(ctx, cmd, "-f", "3")
-	cli.Call(ctx, cmd, "--flag", "4")
+	cli.Call(cmd)
+	cli.Call(cmd, "-f=1")
+	cli.Call(cmd, "--flag=2")
+	cli.Call(cmd, "-f", "3")
+	cli.Call(cmd, "--flag", "4")
 
 	// Output:
 	// 0
@@ -89,8 +83,6 @@ func ExampleCommand_uint() {
 }
 
 func ExampleCommand_float() {
-	ctx := context.TODO()
-
 	type config struct {
 		Float float64 `flag:"-f,--flag" default:"-"`
 	}
@@ -99,11 +91,11 @@ func ExampleCommand_float() {
 		fmt.Println(config.Float)
 	})
 
-	cli.Call(ctx, cmd)
-	cli.Call(ctx, cmd, "-f=1")
-	cli.Call(ctx, cmd, "--flag=2")
-	cli.Call(ctx, cmd, "-f", "3")
-	cli.Call(ctx, cmd, "--flag", "4")
+	cli.Call(cmd)
+	cli.Call(cmd, "-f=1")
+	cli.Call(cmd, "--flag=2")
+	cli.Call(cmd, "-f", "3")
+	cli.Call(cmd, "--flag", "4")
 
 	// Output:
 	// 0
@@ -114,8 +106,6 @@ func ExampleCommand_float() {
 }
 
 func ExampleCommand_string() {
-	ctx := context.TODO()
-
 	type config struct {
 		String string `flag:"-f,--flag" default:"-"`
 	}
@@ -124,17 +114,17 @@ func ExampleCommand_string() {
 		fmt.Println(config.String)
 	})
 
-	cli.Call(ctx, cmd)
+	cli.Call(cmd)
 
-	cli.Call(ctx, cmd, "-f=")
-	cli.Call(ctx, cmd, "-f=short")
-	cli.Call(ctx, cmd, "-f", "")
-	cli.Call(ctx, cmd, "-f", "hello world")
+	cli.Call(cmd, "-f=")
+	cli.Call(cmd, "-f=short")
+	cli.Call(cmd, "-f", "")
+	cli.Call(cmd, "-f", "hello world")
 
-	cli.Call(ctx, cmd, "--flag=")
-	cli.Call(ctx, cmd, "--flag=long")
-	cli.Call(ctx, cmd, "--flag", "")
-	cli.Call(ctx, cmd, "--flag", "hello world")
+	cli.Call(cmd, "--flag=")
+	cli.Call(cmd, "--flag=long")
+	cli.Call(cmd, "--flag", "")
+	cli.Call(cmd, "--flag", "hello world")
 
 	// Output:
 	//
@@ -149,8 +139,6 @@ func ExampleCommand_string() {
 }
 
 func ExampleCommand_duration() {
-	ctx := context.TODO()
-
 	type config struct {
 		Duration time.Duration `flag:"-f,--flag" default:"-"`
 	}
@@ -159,11 +147,11 @@ func ExampleCommand_duration() {
 		fmt.Println(config.Duration)
 	})
 
-	cli.Call(ctx, cmd)
-	cli.Call(ctx, cmd, "-f=1ms")
-	cli.Call(ctx, cmd, "--flag=2s")
-	cli.Call(ctx, cmd, "-f", "3m")
-	cli.Call(ctx, cmd, "--flag", "4h")
+	cli.Call(cmd)
+	cli.Call(cmd, "-f=1ms")
+	cli.Call(cmd, "--flag=2s")
+	cli.Call(cmd, "-f", "3m")
+	cli.Call(cmd, "--flag", "4h")
 
 	// Output:
 	// 0s
@@ -174,8 +162,6 @@ func ExampleCommand_duration() {
 }
 
 func ExampleCommand_time() {
-	ctx := context.TODO()
-
 	type config struct {
 		Time time.Time `flag:"-f,--flag" default:"-"`
 	}
@@ -184,11 +170,11 @@ func ExampleCommand_time() {
 		fmt.Println(config.Time.Unix())
 	})
 
-	cli.Call(ctx, cmd)
-	cli.Call(ctx, cmd, "-f=Mon, 02 Jan 2006 15:04:05 PST")
-	cli.Call(ctx, cmd, "--flag=Mon, 02 Jan 2006 15:04:05 PST")
-	cli.Call(ctx, cmd, "-f", "Mon, 02 Jan 2006 15:04:05 PST")
-	cli.Call(ctx, cmd, "--flag", "Mon, 02 Jan 2006 15:04:05 PST")
+	cli.Call(cmd)
+	cli.Call(cmd, "-f=Mon, 02 Jan 2006 15:04:05 PST")
+	cli.Call(cmd, "--flag=Mon, 02 Jan 2006 15:04:05 PST")
+	cli.Call(cmd, "-f", "Mon, 02 Jan 2006 15:04:05 PST")
+	cli.Call(cmd, "--flag", "Mon, 02 Jan 2006 15:04:05 PST")
 
 	// Output:
 	//-62135596800
@@ -199,8 +185,6 @@ func ExampleCommand_time() {
 }
 
 func ExampleCommand_slice() {
-	ctx := context.TODO()
-
 	type config struct {
 		// Slice types in the configuration struct means the flag can be
 		// passed multiple times.
@@ -211,8 +195,8 @@ func ExampleCommand_slice() {
 		fmt.Println(config.Input)
 	})
 
-	cli.Call(ctx, cmd)
-	cli.Call(ctx, cmd, "-f=file1", "--flag=file2", "--flag", "file3")
+	cli.Call(cmd)
+	cli.Call(cmd, "-f=file1", "--flag=file2", "--flag", "file3")
 
 	// Output:
 	// []
@@ -227,8 +211,6 @@ func (u *unmarshaler) UnmarshalText(b []byte) error {
 }
 
 func ExampleCommand_textUnmarshaler() {
-	ctx := context.TODO()
-
 	type config struct {
 		Input unmarshaler `flag:"-f,--flag" default:"-"`
 	}
@@ -237,8 +219,8 @@ func ExampleCommand_textUnmarshaler() {
 		fmt.Println(string(config.Input))
 	})
 
-	cli.Call(ctx, cmd)
-	cli.Call(ctx, cmd, "--flag", "hello world")
+	cli.Call(cmd)
+	cli.Call(cmd, "--flag", "hello world")
 
 	// Output:
 	//
@@ -246,8 +228,6 @@ func ExampleCommand_textUnmarshaler() {
 }
 
 func ExampleCommand_default() {
-	ctx := context.TODO()
-
 	type config struct {
 		Path string `flag:"-p,--path" default:"file.txt" env:"-"`
 	}
@@ -256,13 +236,11 @@ func ExampleCommand_default() {
 		fmt.Println(config.Path)
 	})
 
-	cli.Call(ctx, cmd)
+	cli.Call(cmd)
 	// Output: file.txt
 }
 
 func ExampleCommand_required() {
-	ctx := context.TODO()
-
 	type config struct {
 		Path string `flag:"-p,--path" env:"-"`
 	}
@@ -272,7 +250,7 @@ func ExampleCommand_required() {
 	})
 
 	cli.Err = os.Stdout
-	cli.Call(ctx, cmd)
+	cli.Call(cmd)
 	// Output:
 	// Usage:
 	//   [options]
@@ -286,8 +264,6 @@ func ExampleCommand_required() {
 }
 
 func ExampleCommand_environment() {
-	ctx := context.TODO()
-
 	type config struct {
 		String string `flag:"-f,--flag" default:"-"`
 	}
@@ -298,46 +274,40 @@ func ExampleCommand_environment() {
 
 	os.Setenv("FLAG", "hello world")
 	cli.Err = os.Stdout
-	cli.Call(ctx, cmd)
+	cli.Call(cmd)
 	// Output: hello world
 }
 
 func ExampleCommand_positional_arguments() {
-	ctx := context.TODO()
-
 	type config struct{}
 
 	cmd := cli.Command(func(config config, x, y int) {
 		fmt.Println(x, y)
 	})
 
-	cli.Call(ctx, cmd, "10", "42")
+	cli.Call(cmd, "10", "42")
 	// Output: 10 42
 }
 
 func ExampleCommand_positional_arguments_slice() {
-	ctx := context.TODO()
-
 	type config struct{}
 
 	cmd := cli.Command(func(config config, paths []string) {
 		fmt.Println(paths)
 	})
 
-	cli.Call(ctx, cmd, "file1.txt", "file2.txt", "file3.txt")
+	cli.Call(cmd, "file1.txt", "file2.txt", "file3.txt")
 	// Output: [file1.txt file2.txt file3.txt]
 }
 
 func ExampleCommand_with_sub_command() {
-	ctx := context.TODO()
-
 	type config struct{}
 
 	cmd := cli.Command(func(config config, sub ...string) {
 		fmt.Println(sub)
 	})
 
-	cli.Call(ctx, cmd, "--", "curl", "https://segment.com")
+	cli.Call(cmd, "--", "curl", "https://segment.com")
 	// Output: [curl https://segment.com]
 }
 
@@ -348,7 +318,7 @@ func ExampleCommand_context() {
 		fmt.Println("hello world")
 	})
 
-	cli.Call(ctx, cmd)
+	cli.CallContext(ctx, cmd)
 	// Output: hello world
 }
 
@@ -361,7 +331,7 @@ func ExampleCommand_context_config() {
 		fmt.Println("hello world")
 	})
 
-	cli.Call(ctx, cmd)
+	cli.CallContext(ctx, cmd)
 	// Output: hello world
 }
 
@@ -374,13 +344,11 @@ func ExampleCommand_context_args() {
 		fmt.Println(args)
 	})
 
-	cli.Call(ctx, cmd, "hello", "world")
+	cli.CallContext(ctx, cmd, "hello", "world")
 	// Output: [hello world]
 }
 
 func ExampleCommandSet() {
-	ctx := context.TODO()
-
 	help := cli.Command(func() {
 		fmt.Println("help")
 	})
@@ -401,9 +369,9 @@ func ExampleCommandSet() {
 		},
 	}
 
-	cli.Call(ctx, cmd, "help")
-	cli.Call(ctx, cmd, "do", "this")
-	cli.Call(ctx, cmd, "do", "that")
+	cli.Call(cmd, "help")
+	cli.Call(cmd, "do", "this")
+	cli.Call(cmd, "do", "that")
 
 	// Output:
 	// help
@@ -412,8 +380,6 @@ func ExampleCommandSet() {
 }
 
 func ExampleCommand_help() {
-	ctx := context.TODO()
-
 	type config struct {
 		Path  string `flag:"--path"     help:"Path to some file" default:"file" env:"-"`
 		Debug bool   `flag:"-d,--debug" help:"Enable debug mode"`
@@ -426,7 +392,7 @@ func ExampleCommand_help() {
 	}
 
 	cli.Err = os.Stdout
-	cli.Call(ctx, cmd, "do", "-h")
+	cli.Call(cmd, "do", "-h")
 
 	// Output:
 	// Usage:
@@ -439,8 +405,6 @@ func ExampleCommand_help() {
 }
 
 func ExampleCommand_usage() {
-	ctx := context.TODO()
-
 	type config struct {
 		Count int  `flag:"-n"         help:"Number of things"  default:"1"`
 		Debug bool `flag:"-d,--debug" help:"Enable debug mode"`
@@ -453,7 +417,7 @@ func ExampleCommand_usage() {
 	}
 
 	cli.Err = os.Stdout
-	cli.Call(ctx, cmd, "do", "-n", "abc")
+	cli.Call(cmd, "do", "-n", "abc")
 
 	// Output:
 	// Usage:
@@ -469,8 +433,6 @@ func ExampleCommand_usage() {
 }
 
 func ExampleCommandSet_help() {
-	ctx := context.TODO()
-
 	type thisConfig struct {
 		_     struct{} `help:"Call this command"`
 		Path  string   `flag:"-p,--path"  help:"Path to some file" default:"file" env:"-"`
@@ -495,7 +457,7 @@ func ExampleCommandSet_help() {
 	}
 
 	cli.Err = os.Stdout
-	cli.Call(ctx, cmd, "do", "--help")
+	cli.Call(cmd, "do", "--help")
 
 	// Output:
 	// Usage:

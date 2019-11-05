@@ -1,7 +1,6 @@
 package cli_test
 
 import (
-	"context"
 	"os"
 
 	"github.com/segmentio/cli"
@@ -21,9 +20,7 @@ func ExampleFormat_json() {
 		return nil
 	})
 
-	ctx := context.TODO()
-
-	cli.Call(ctx, cmd)
+	cli.Call(cmd)
 	// Output:
 	// {
 	//   "Message": "Hello World!"
@@ -48,9 +45,7 @@ func ExampleFormat_yaml() {
 		return nil
 	})
 
-	ctx := context.TODO()
-
-	cli.Call(ctx, cmd)
+	cli.Call(cmd)
 	// Output:
 	// value: 1
 	// ---
@@ -72,9 +67,7 @@ func ExampleFormat_text_string() {
 		return nil
 	})
 
-	ctx := context.TODO()
-
-	cli.Call(ctx, cmd)
+	cli.Call(cmd)
 	// Output:
 	// hello
 	// world
@@ -100,9 +93,7 @@ func ExampleFormat_text_struct() {
 		return nil
 	})
 
-	ctx := context.TODO()
-
-	cli.Call(ctx, cmd)
+	cli.Call(cmd)
 	// Output:
 	// ID    NAME  VALUE
 	// 1234  A     1
@@ -138,9 +129,7 @@ func ExampleFormat_text_map() {
 		return nil
 	})
 
-	ctx := context.TODO()
-
-	cli.Call(ctx, cmd)
+	cli.Call(cmd)
 	// Output:
 	// ID    NAME  VALUE
 	// 1234  A     1

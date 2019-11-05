@@ -37,11 +37,15 @@ type Function interface {
 //	}
 //
 // The Exec function never returns.
-func Exec(ctx context.Context, cmd Function) {
+func Exec(cmd Function) {
+	ExecContext(context.Background(), cmd)
+}
+
+func ExecContext(ctx context.Context, cmd Function) {
 	name := filepath.Base(os.Args[0])
 	args := os.Args[1:]
 	prog := NamedCommand(name, cmd)
-	os.Exit(Call(ctx, prog, args...))
+	os.Exit(CallContext(ctx, prog, args...))
 }
 
 // Call calls cmd with args and environment variables prefixed with the
@@ -62,7 +66,11 @@ func Exec(ctx context.Context, cmd Function) {
 //		// ...
 //	}
 //
-func Call(ctx context.Context, cmd Function, args ...string) int {
+func Call(cmd Function, args ...string) int {
+	return CallContext(context.TODO(), cmd, args...)
+}
+
+func CallContext(ctx context.Context, cmd Function, args ...string) int {
 	prefix := strings.ToUpper(snakecase(nameOf(cmd)))
 
 	code, err := cmd.Call(ctx, args, environ(prefix))
