@@ -122,7 +122,7 @@ func (cmd *CommandFunc) configure() {
 		panic("cli.Command: expected a function as argument but got " + t.String())
 	}
 
-	ctx := reflect.TypeOf((*context.Context)(nil)).Elem()
+	ctxType := reflect.TypeOf((*context.Context)(nil)).Elem()
 
 	cmd.function = v
 	cmd.variadic = t.IsVariadic()
@@ -132,7 +132,7 @@ func (cmd *CommandFunc) configure() {
 	} else {
 		x := 0
 
-		if f := t.In(x); f.Kind() == reflect.Interface && f.Implements(ctx) {
+		if f := t.In(x); f.Kind() == reflect.Interface && f.Implements(ctxType) {
 			cmd.context = true
 			x++
 		}
