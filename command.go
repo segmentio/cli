@@ -226,6 +226,8 @@ func (cmd *CommandFunc) Call(ctx context.Context, args, env []string) (int, erro
 	if cmd.context {
 		params = append(params, reflect.ValueOf(ctx))
 		x++
+	} else if ctx != context.TODO() {
+		panic("mixing usage of context aware and unaware commands")
 	}
 
 	if t := cmd.function.Type(); t.NumIn() > 0 {

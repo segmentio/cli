@@ -38,7 +38,7 @@ type Function interface {
 //
 // The Exec function never returns.
 func Exec(cmd Function) {
-	ExecContext(context.Background(), cmd)
+	ExecContext(context.TODO(), cmd)
 }
 
 // ExecContext calls Exec but with a specified context.Context.
