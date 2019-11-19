@@ -215,7 +215,7 @@ func (cmd *CommandFunc) Call(ctx context.Context, args, env []string) (int, erro
 
 	for name, field := range cmd.options {
 		if _, ok := options[name]; !ok && field.defval == "" && !field.boolean && !field.slice {
-			return 1, &Usage{Cmd: cmd, Err: fmt.Errorf("missing required option: %q", name)}
+			return 1, &Usage{Cmd: cmd, Err: fmt.Errorf("missing required flag: %q", name)}
 		}
 	}
 

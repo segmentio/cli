@@ -260,7 +260,7 @@ func ExampleCommand_required() {
 	//   -p, --path string
 	//
 	// Error:
-	//   missing required option: "--path"
+	//   missing required flag: "--path"
 }
 
 func ExampleCommand_environment() {
