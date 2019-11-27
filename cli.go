@@ -74,6 +74,9 @@ func Call(cmd Function, args ...string) int {
 // CallContext calls Call but with a specified context.Context.
 func CallContext(ctx context.Context, cmd Function, args ...string) int {
 	prefix := strings.ToUpper(snakecase(nameOf(cmd)))
+	if prefix != "" {
+		prefix = prefix + "_"
+	}
 
 	code, err := cmd.Call(ctx, args, environ(prefix))
 

@@ -268,11 +268,13 @@ func ExampleCommand_environment() {
 		String string `flag:"-f,--flag" default:"-"`
 	}
 
-	cmd := cli.Command(func(config config) {
+	// If you don't specify the name using NamedCommand, it defaults
+	// to the binary name.
+	cmd := cli.NamedCommand("prog", cli.Command(func(config config) {
 		fmt.Println(config.String)
-	})
+	}))
 
-	os.Setenv("FLAG", "hello world")
+	os.Setenv("PROG_FLAG", "hello world")
 	cli.Err = os.Stdout
 	cli.Call(cmd)
 	// Output: hello world
