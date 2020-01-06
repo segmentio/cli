@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"encoding"
 	"encoding/json"
 	"fmt"
@@ -9,7 +10,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // Printer is an interface implemented for high-level printing formats.
@@ -57,34 +58,54 @@ func Format(format string, output io.Writer) (PrintFlusher, error) {
 	}
 }
 
-type jsonFormat struct{ *json.Encoder }
-
-func newJsonFormat(w io.Writer) jsonFormat {
-	e := json.NewEncoder(w)
-	e.SetIndent("", "  ")
-	return jsonFormat{e}
+type jsonFormat struct {
+	writer io.Writer
+	values []json.RawMessage
 }
 
-func (p jsonFormat) Print(v interface{}) { p.Encode(v) }
-
-func (p jsonFormat) Flush() {}
-
-type yamlFormat struct{ *yaml.Encoder }
-
-func newYamlFormat(w io.Writer) yamlFormat {
-	return yamlFormat{yaml.NewEncoder(w)}
+func newJsonFormat(w io.Writer) *jsonFormat {
+	return &jsonFormat{writer: w}
 }
 
-func (p yamlFormat) Print(v interface{}) {
+func (p *jsonFormat) Print(v interface{}) {
 	b, _ := json.Marshal(v)
-
-	var x interface{}
-	yaml.Unmarshal(b, &x)
-
-	p.Encode(x)
+	p.values = append(p.values, json.RawMessage(b))
 }
 
-func (p yamlFormat) Flush() { p.Close() }
+func (p *jsonFormat) Flush() {
+	e := json.NewEncoder(p.writer)
+	e.SetIndent("", "  ")
+	e.Encode(p.values)
+}
+
+type yamlFormat struct {
+	writer io.Writer
+	buffer bytes.Buffer
+	enc    *json.Encoder
+	dec    *json.Decoder
+	values []interface{}
+}
+
+func newYamlFormat(w io.Writer) *yamlFormat {
+	f := &yamlFormat{writer: w}
+	f.enc = json.NewEncoder(&f.buffer)
+	f.dec = json.NewDecoder(&f.buffer)
+	return f
+}
+
+func (p *yamlFormat) Print(v interface{}) {
+	var value interface{}
+	p.enc.Encode(v)
+	p.dec.Decode(&value)
+	p.values = append(p.values, value)
+}
+
+func (p *yamlFormat) Flush() {
+	e := yaml.NewEncoder(p.writer)
+	e.SetIndent(2)
+	e.Encode(p.values)
+	e.Close()
+}
 
 type textFormat struct {
 	w  io.Writer
