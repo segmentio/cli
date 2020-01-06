@@ -98,22 +98,20 @@ func newTextFormat(w io.Writer) *textFormat {
 }
 
 func (p *textFormat) Print(x interface{}) {
-	v := reflect.ValueOf(x)
-
 	switch x.(type) {
 	case encoding.TextMarshaler, fmt.Formatter, fmt.Stringer, error:
 		p.print(x)
 		return
 	}
-
-	switch v.Kind() {
+	switch v := reflect.ValueOf(x); v.Kind() {
 	case reflect.Struct:
 		p.printStruct(v)
+	case reflect.Slice:
+		p.printSlice(v)
 	case reflect.Map:
 		p.printMap(v)
 	default:
 		p.print(x)
-		return
 	}
 }
 
@@ -145,6 +143,12 @@ func (p *textFormat) printStruct(v reflect.Value) {
 	})
 
 	io.WriteString(&p.tw, "\n")
+}
+
+func (p *textFormat) printSlice(v reflect.Value) {
+	for i, n := 0, v.Len(); i < n; i++ {
+		p.Print(v.Index(i).Interface())
+	}
 }
 
 func (p *textFormat) printMap(v reflect.Value) {
