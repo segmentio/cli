@@ -58,56 +58,34 @@ func Format(format string, output io.Writer) (PrintFlusher, error) {
 	}
 }
 
-type jsonFormat struct {
-	writer io.Writer
-	values []json.RawMessage
-}
+type jsonFormat struct{ *json.Encoder }
 
-func newJsonFormat(w io.Writer) *jsonFormat {
-	return &jsonFormat{writer: w}
-}
-
-func (p *jsonFormat) Print(v interface{}) {
-	b, _ := json.Marshal(v)
-	p.values = append(p.values, json.RawMessage(b))
-}
-
-func (p *jsonFormat) Flush() {
-	e := json.NewEncoder(p.writer)
+func newJsonFormat(w io.Writer) jsonFormat {
+	e := json.NewEncoder(w)
 	e.SetIndent("", "  ")
-	e.Encode(p.values)
-	p.values = nil
+	return jsonFormat{e}
 }
 
-type yamlFormat struct {
-	writer io.Writer
-	buffer bytes.Buffer
-	enc    *json.Encoder
-	dec    *json.Decoder
-	values []interface{}
+func (p jsonFormat) Print(v interface{}) { p.Encode(v) }
+
+func (p jsonFormat) Flush() {}
+
+type yamlFormat struct{ *yaml.Encoder }
+
+func newYamlFormat(w io.Writer) yamlFormat {
+	return yamlFormat{yaml.NewEncoder(w)}
 }
 
-func newYamlFormat(w io.Writer) *yamlFormat {
-	f := &yamlFormat{writer: w}
-	f.enc = json.NewEncoder(&f.buffer)
-	f.dec = json.NewDecoder(&f.buffer)
-	return f
+func (p yamlFormat) Print(v interface{}) {
+	b, _ := json.Marshal(v)
+
+	var x interface{}
+	yaml.Unmarshal(b, &x)
+
+	p.Encode(x)
 }
 
-func (p *yamlFormat) Print(v interface{}) {
-	var value interface{}
-	p.enc.Encode(v)
-	p.dec.Decode(&value)
-	p.values = append(p.values, value)
-}
-
-func (p *yamlFormat) Flush() {
-	e := yaml.NewEncoder(p.writer)
-	e.SetIndent(2)
-	e.Encode(p.values)
-	e.Close()
-	p.values = nil
-}
+func (p yamlFormat) Flush() { p.Close() }
 
 type textFormat struct {
 	w  io.Writer
@@ -263,4 +241,83 @@ func (p *textFormat) forEachStructField(v reflect.Value, do func(string, reflect
 
 func normalizeColumnName(name string) string {
 	return strings.ReplaceAll(strings.ToUpper(snakecase(name)), "_", " ")
+}
+
+// FormatList returns a Printer which formats lists of printed values.
+//
+// Typical usage looks like this:
+//
+//	p, err := cli.FormatList(config.Format, os.Stdout)
+//	if err != nil {
+//		return err
+//	}
+//	defer p.Flush()
+//	...
+//	p.Print(v1)
+//	p.Print(v2)
+//	p.Print(v3)
+//
+// If the format name is not supported, the function returns a usage error.
+func FormatList(format string, output io.Writer) (PrintFlusher, error) {
+	switch format {
+	case "json":
+		return newJsonFormatList(output), nil
+	case "yaml":
+		return newYamlFormatList(output), nil
+	case "text":
+		return newTextFormat(output), nil
+	default:
+		return nil, &Usage{Err: fmt.Errorf("unsupported output format: %q", format)}
+	}
+}
+
+type jsonFormatList struct {
+	writer io.Writer
+	values []json.RawMessage
+}
+
+func newJsonFormatList(w io.Writer) *jsonFormatList {
+	return &jsonFormatList{writer: w}
+}
+
+func (p *jsonFormatList) Print(v interface{}) {
+	b, _ := json.Marshal(v)
+	p.values = append(p.values, json.RawMessage(b))
+}
+
+func (p *jsonFormatList) Flush() {
+	e := json.NewEncoder(p.writer)
+	e.SetIndent("", "  ")
+	e.Encode(p.values)
+	p.values = nil
+}
+
+type yamlFormatList struct {
+	writer io.Writer
+	buffer bytes.Buffer
+	enc    *json.Encoder
+	dec    *json.Decoder
+	values []interface{}
+}
+
+func newYamlFormatList(w io.Writer) *yamlFormatList {
+	f := &yamlFormatList{writer: w}
+	f.enc = json.NewEncoder(&f.buffer)
+	f.dec = json.NewDecoder(&f.buffer)
+	return f
+}
+
+func (p *yamlFormatList) Print(v interface{}) {
+	var value interface{}
+	p.enc.Encode(v)
+	p.dec.Decode(&value)
+	p.values = append(p.values, value)
+}
+
+func (p *yamlFormatList) Flush() {
+	e := yaml.NewEncoder(p.writer)
+	e.SetIndent(2)
+	e.Encode(p.values)
+	e.Close()
+	p.values = nil
 }
