@@ -76,6 +76,7 @@ func (p *jsonFormat) Flush() {
 	e := json.NewEncoder(p.writer)
 	e.SetIndent("", "  ")
 	e.Encode(p.values)
+	p.values = nil
 }
 
 type yamlFormat struct {
@@ -105,6 +106,7 @@ func (p *yamlFormat) Flush() {
 	e.SetIndent(2)
 	e.Encode(p.values)
 	e.Close()
+	p.values = nil
 }
 
 type textFormat struct {
