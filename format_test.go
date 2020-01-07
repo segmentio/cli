@@ -136,3 +136,51 @@ func ExampleFormat_text_map() {
 	// 5678  B     2
 	// 9012  C     3
 }
+
+func ExampleFormatList_json() {
+	cmd := cli.Command(func() error {
+		p, err := cli.FormatList("json", os.Stdout)
+		if err != nil {
+			return err
+		}
+		defer p.Flush()
+
+		p.Print(struct {
+			Message string
+		}{"Hello World!"})
+		return nil
+	})
+
+	cli.Call(cmd)
+	// Output:
+	// [
+	//   {
+	//     "Message": "Hello World!"
+	//   }
+	// ]
+}
+
+func ExampleFormatList_yaml() {
+	cmd := cli.Command(func() error {
+		p, err := cli.FormatList("yaml", os.Stdout)
+		if err != nil {
+			return err
+		}
+		defer p.Flush()
+
+		type output struct {
+			Value int `json:"value"`
+		}
+
+		p.Print(output{1})
+		p.Print(output{2})
+		p.Print(output{3})
+		return nil
+	})
+
+	cli.Call(cmd)
+	// Output:
+	// - value: 1
+	// - value: 2
+	// - value: 3
+}

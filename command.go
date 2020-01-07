@@ -360,6 +360,11 @@ func (cmd *CommandFunc) Format(w fmt.State, v rune) {
 		}
 
 	case 'v': // description
+		if w.Flag('#') {
+			io.WriteString(w, strings.Replace(cmd.function.Type().String(), "func", "cli.Command", 1))
+			return
+		}
+
 		if cmd.Desc != "" {
 			for _, line := range strings.Split(cmd.Desc, "\n") {
 				fmt.Fprintf(w, "  %s\n", line)
@@ -518,16 +523,7 @@ func (cmds CommandSet) Call(ctx context.Context, args, env []string) (int, error
 		return 1, &Usage{Cmd: cmds, Err: fmt.Errorf("unknown command: %q", a)}
 	}
 
-	cmd := NamedCommand(a, c)
-
-	code, err := cmd.Call(ctx, args[1:], env)
-	switch e := err.(type) {
-	case *Help:
-		e.Cmd = cmd
-	case *Usage:
-		e.Cmd = cmd
-	}
-	return code, err
+	return NamedCommand(a, c).Call(ctx, args[1:], env)
 }
 
 // Format writes a human-redable representation of cmds to w, using v as the
@@ -545,6 +541,23 @@ func (cmds CommandSet) Format(w fmt.State, v rune) {
 	case 's':
 		io.WriteString(w, "[command] [-h] [--help] ...")
 	case 'v':
+		if w.Flag('#') {
+			io.WriteString(w, "cli.CommandSet{")
+			names := make([]string, 0, len(cmds))
+			for name := range cmds {
+				names = append(names, name)
+			}
+			sort.Strings(names)
+			for i, name := range names {
+				if i != 0 {
+					io.WriteString(w, ", ")
+				}
+				fmt.Fprintf(w, "%q:%#v", name, cmds[name])
+			}
+			io.WriteString(w, "}")
+			return
+		}
+
 		io.WriteString(w, "Commands:\n")
 		tw := newTabWriter(w)
 
@@ -564,7 +577,7 @@ Options:
 // NamedCommand constructs a command which carries the named passed as argument
 // and delegate execution to cmd.
 func NamedCommand(name string, cmd Function) Function {
-	return namedCommand{name: name, cmd: cmd}
+	return &namedCommand{name: name, cmd: cmd}
 }
 
 type namedCommand struct {
@@ -572,32 +585,45 @@ type namedCommand struct {
 	cmd  Function
 }
 
-func (c namedCommand) Call(ctx context.Context, args, env []string) (int, error) {
+func (c *namedCommand) Call(ctx context.Context, args, env []string) (int, error) {
 	code, err := c.cmd.Call(ctx, args, env)
 	switch e := err.(type) {
 	case *Help:
-		e.Cmd = NamedCommand(c.name, e.Cmd)
+		if e.Cmd == nil {
+			e.Cmd = c
+		} else {
+			e.Cmd = NamedCommand(c.name, e.Cmd)
+		}
 	case *Usage:
-		e.Cmd = NamedCommand(c.name, e.Cmd)
+		if e.Cmd == nil {
+			e.Cmd = c
+		} else {
+			e.Cmd = NamedCommand(c.name, e.Cmd)
+		}
 	}
 	return code, err
 }
 
-func (c namedCommand) Format(w fmt.State, v rune) {
+func (c *namedCommand) Format(w fmt.State, v rune) {
 	switch v {
 	case 's':
 		fmt.Fprintf(w, "%s ", c.name)
+	case 'v':
+		if w.Flag('#') {
+			fmt.Fprintf(w, "cli.NamedCommand(%q, %#v)", c.name, c.cmd)
+			return
+		}
 	}
 	if f, ok := c.cmd.(fmt.Formatter); ok {
 		f.Format(w, v)
 	}
 }
 
-func (c namedCommand) Name() string {
+func (c *namedCommand) Name() string {
 	return c.name
 }
 
-func (c namedCommand) configure() {
+func (c *namedCommand) configure() {
 	if x, ok := c.cmd.(interface{ configure() }); ok {
 		x.configure()
 	}
