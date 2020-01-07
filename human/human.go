@@ -24,5 +24,5 @@ func parseInt(s string) (int, string, error) {
 }
 
 func match(s, pattern string) bool {
-	return len(s) <= len(pattern) && strings.HasPrefix(pattern, s)
+	return strings.HasPrefix(pattern, s)
 }
