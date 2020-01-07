@@ -480,6 +480,43 @@ func ExampleCommandSet_help() {
 	//   -h, --help  Show this help message
 }
 
+func ExampleCommandSet_help2() {
+	type thisConfig struct {
+		_     struct{} `help:"Call this command"`
+		Path  string   `flag:"-p,--path"  help:"Path to some file" default:"file" env:"-"`
+		Debug bool     `flag:"-d,--debug" help:"Enable debug mode"`
+	}
+
+	type thatConfig struct {
+		_     struct{} `help:"Call that command"`
+		Count int      `flag:"-n"         help:"Number of things"  default:"1"`
+		Debug bool     `flag:"-d,--debug" help:"Enable debug mode"`
+	}
+
+	cmd := cli.CommandSet{
+		"do": cli.CommandSet{
+			"this": cli.Command(func(config thisConfig) {
+				// ...
+			}),
+			"that": cli.Command(func(config thatConfig) {
+				// ...
+			}),
+		},
+	}
+
+	cli.Err = os.Stdout
+	cli.Call(cmd, "do", "this", "-h")
+
+	// Output:
+	// Usage:
+	//   do this [options]
+	//
+	// Options:
+	//   -d, --debug        Enable debug mode
+	//   -h, --help         Show this help message
+	//   -p, --path string  Path to some file (default: file)
+}
+
 func ExampleCommand_spacesInFlag() {
 	type config struct {
 		String string `flag:"-f, --flag" default:"-"`
