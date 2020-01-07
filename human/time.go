@@ -62,12 +62,16 @@ func ParseTimeAt(s string, now time.Time) (Time, error) {
 	return Time{}, fmt.Errorf("unsupported time representation: %q", s)
 }
 
+func (t Time) IsZero() bool {
+	return time.Time(t).IsZero()
+}
+
 func (t Time) String() string {
 	return t.StringAt(time.Now())
 }
 
 func (t Time) StringAt(now time.Time) string {
-	if time.Time(t).IsZero() {
+	if t.IsZero() {
 		return "(none)"
 	}
 	d := now.Sub(time.Time(t))
@@ -125,6 +129,7 @@ var (
 	_ json.Marshaler   = Time{}
 	_ json.Unmarshaler = (*Time)(nil)
 
+	_ yaml.IsZeroer    = Time{}
 	_ yaml.Marshaler   = Time{}
 	_ yaml.Unmarshaler = (*Time)(nil)
 
