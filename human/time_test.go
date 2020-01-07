@@ -58,7 +58,7 @@ func TestTimeParse(t *testing.T) {
 		t.Run(test.in, func(t *testing.T) {
 			p, err := ParseTimeAt(test.in, now)
 			if err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
 			if d := Duration(time.Time(p).Sub(now)); d != test.out {
 				t.Error("parsed time delta mismatch:", d, "!=", test.out)
@@ -69,13 +69,12 @@ func TestTimeParse(t *testing.T) {
 
 			b, err := json.Marshal(u)
 			if err != nil {
-				t.Error("json marshal error:", err)
-			} else {
-				if err := json.Unmarshal(b, &v); err != nil {
-					t.Error("json unmarshal error:", err)
-				} else if !time.Time(v).Equal(time.Time(u)) {
-					t.Error("json value mismatch:", v, "!=", u)
-				}
+				t.Fatal("json marshal error:", err)
+			}
+			if err := json.Unmarshal(b, &v); err != nil {
+				t.Error("json unmarshal error:", err)
+			} else if !time.Time(v).Equal(time.Time(u)) {
+				t.Error("json value mismatch:", v, "!=", u)
 			}
 		})
 	}

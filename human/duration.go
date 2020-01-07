@@ -135,12 +135,7 @@ func (d Duration) MarshalJSON() ([]byte, error) {
 }
 
 func (d *Duration) UnmarshalJSON(b []byte) error {
-	var v time.Duration
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-	*d = Duration(v)
-	return nil
+	return json.Unmarshal(b, (*time.Duration)(d))
 }
 
 func (d Duration) MarshalText() ([]byte, error) {
