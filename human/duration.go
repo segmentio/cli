@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	yaml "gopkg.in/yaml.v3"
 )
 
 const (
@@ -138,6 +140,23 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	return json.Unmarshal(b, (*time.Duration)(d))
 }
 
+func (d Duration) MarshalYAML() (interface{}, error) {
+	return time.Duration(d).String(), nil
+}
+
+func (d *Duration) UnmarshalYAML(y *yaml.Node) error {
+	var s string
+	if err := y.Decode(&s); err != nil {
+		return err
+	}
+	p, err := time.ParseDuration(s)
+	if err != nil {
+		return err
+	}
+	*d = Duration(p)
+	return nil
+}
+
 func (d Duration) MarshalText() ([]byte, error) {
 	return []byte(d.String()), nil
 }
@@ -204,6 +223,9 @@ var (
 
 	_ json.Marshaler   = Duration(0)
 	_ json.Unmarshaler = (*Duration)(nil)
+
+	_ yaml.Marshaler   = Duration(0)
+	_ yaml.Unmarshaler = (*Duration)(nil)
 
 	_ encoding.TextMarshaler   = Duration(0)
 	_ encoding.TextUnmarshaler = (*Duration)(nil)

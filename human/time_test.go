@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"testing"
 	"time"
+
+	yaml "gopkg.in/yaml.v3"
 )
 
 func TestTimeParse(t *testing.T) {
 	now := time.Now()
+	end := now.Add(1 * time.Second)
 
 	for _, test := range []struct {
 		in  string
@@ -54,6 +57,8 @@ func TestTimeParse(t *testing.T) {
 		{in: "2 days later", out: Duration(48 * time.Hour)},
 		{in: "1 week later", out: Duration(7 * 24 * time.Hour)},
 		{in: "2 weeks later", out: Duration(14 * 24 * time.Hour)},
+
+		{in: end.Format(time.RFC3339Nano), out: Duration(1 * time.Second)},
 	} {
 		t.Run(test.in, func(t *testing.T) {
 			p, err := ParseTimeAt(test.in, now)
@@ -62,19 +67,6 @@ func TestTimeParse(t *testing.T) {
 			}
 			if d := Duration(time.Time(p).Sub(now)); d != test.out {
 				t.Error("parsed time delta mismatch:", d, "!=", test.out)
-			}
-
-			u := Time(now.Add(time.Duration(test.out)))
-			v := Time{}
-
-			b, err := json.Marshal(u)
-			if err != nil {
-				t.Fatal("json marshal error:", err)
-			}
-			if err := json.Unmarshal(b, &v); err != nil {
-				t.Error("json unmarshal error:", err)
-			} else if !time.Time(v).Equal(time.Time(u)) {
-				t.Error("json value mismatch:", v, "!=", u)
 			}
 		})
 	}
@@ -126,5 +118,27 @@ func TestTimeFormat(t *testing.T) {
 				t.Error("time string mismatch:", s, "!=", test.out)
 			}
 		})
+	}
+}
+
+func TestTimeJSON(t *testing.T) {
+	testTimeEncoding(t, Time(time.Now()), json.Marshal, json.Unmarshal)
+}
+
+func TestTimeYAML(t *testing.T) {
+	testTimeEncoding(t, Time(time.Now()), yaml.Marshal, yaml.Unmarshal)
+}
+
+func testTimeEncoding(t *testing.T, x Time, marshal func(interface{}) ([]byte, error), unmarshal func([]byte, interface{}) error) {
+	b, err := marshal(x)
+	if err != nil {
+		t.Fatal("marshal error:", err)
+	}
+
+	v := Time{}
+	if err := unmarshal(b, &v); err != nil {
+		t.Error("unmarshal error:", err)
+	} else if !time.Time(v).Equal(time.Time(x)) {
+		t.Error("value mismatch:", v, "!=", x)
 	}
 }

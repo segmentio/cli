@@ -7,6 +7,8 @@ import (
 	"math"
 	"strconv"
 	"strings"
+
+	yaml "gopkg.in/yaml.v3"
 )
 
 type Number float64
@@ -71,6 +73,14 @@ func (n *Number) UnmarshalJSON(b []byte) error {
 	return json.Unmarshal(b, (*float64)(n))
 }
 
+func (n Number) MarshalYAML() (interface{}, error) {
+	return float64(n), nil
+}
+
+func (n *Number) UnmarshalYAML(y *yaml.Node) error {
+	return y.Decode((*float64)(n))
+}
+
 func (n Number) MarshalText() ([]byte, error) {
 	return []byte(n.String()), nil
 }
@@ -89,6 +99,9 @@ var (
 
 	_ json.Marshaler   = Number(0)
 	_ json.Unmarshaler = (*Number)(nil)
+
+	_ yaml.Marshaler   = Number(0)
+	_ yaml.Unmarshaler = (*Number)(nil)
 
 	_ encoding.TextMarshaler   = Number(0)
 	_ encoding.TextUnmarshaler = (*Number)(nil)

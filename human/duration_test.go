@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 	"time"
+
+	yaml "gopkg.in/yaml.v3"
 )
 
 func TestDurationParse(t *testing.T) {
@@ -40,19 +42,6 @@ func TestDurationParse(t *testing.T) {
 			if d != test.out {
 				t.Error("parsed duration mismatch:", d, "!=", test.out)
 			}
-
-			u := test.out
-			v := Duration(0)
-
-			b, err := json.Marshal(u)
-			if err != nil {
-				t.Fatal("json marshal error:", err)
-			}
-			if err := json.Unmarshal(b, &v); err != nil {
-				t.Error("json unmarshal error:", err)
-			} else if v != u {
-				t.Error("json value mismatch:", v, "!=", u)
-			}
 		})
 	}
 }
@@ -85,5 +74,27 @@ func TestDurationFormat(t *testing.T) {
 				t.Error("duration string mismatch:", s, "!=", test.out)
 			}
 		})
+	}
+}
+
+func TestDurationJSON(t *testing.T) {
+	testDurationEncoding(t, Duration(2*time.Hour), json.Marshal, json.Unmarshal)
+}
+
+func TestDurationYAML(t *testing.T) {
+	testDurationEncoding(t, Duration(2*time.Hour), yaml.Marshal, yaml.Unmarshal)
+}
+
+func testDurationEncoding(t *testing.T, x Duration, marshal func(interface{}) ([]byte, error), unmarshal func([]byte, interface{}) error) {
+	b, err := marshal(x)
+	if err != nil {
+		t.Fatal("marshal error:", err)
+	}
+
+	v := Duration(0)
+	if err := unmarshal(b, &v); err != nil {
+		t.Error("unmarshal error:", err)
+	} else if v != x {
+		t.Error("value mismatch:", v, "!=", x)
 	}
 }

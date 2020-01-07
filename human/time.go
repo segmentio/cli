@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	yaml "gopkg.in/yaml.v3"
 )
 
 type Time time.Time
@@ -87,6 +89,23 @@ func (t *Time) UnmarshalJSON(b []byte) error {
 	return ((*time.Time)(t)).UnmarshalJSON(b)
 }
 
+func (t Time) MarshalYAML() (interface{}, error) {
+	return time.Time(t).Format(time.RFC3339Nano), nil
+}
+
+func (t *Time) UnmarshalYAML(y *yaml.Node) error {
+	var s string
+	if err := y.Decode(&s); err != nil {
+		return err
+	}
+	p, err := time.Parse(time.RFC3339Nano, s)
+	if err != nil {
+		return err
+	}
+	*t = Time(p)
+	return nil
+}
+
 func (t Time) MarshalText() ([]byte, error) {
 	return []byte(t.String()), nil
 }
@@ -105,6 +124,9 @@ var (
 
 	_ json.Marshaler   = Time{}
 	_ json.Unmarshaler = (*Time)(nil)
+
+	_ yaml.Marshaler   = Time{}
+	_ yaml.Unmarshaler = (*Time)(nil)
 
 	_ encoding.TextMarshaler   = Time{}
 	_ encoding.TextUnmarshaler = (*Time)(nil)
