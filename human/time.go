@@ -65,6 +65,9 @@ func (t Time) String() string {
 }
 
 func (t Time) StringAt(now time.Time) string {
+	if time.Time(t).IsZero() {
+		return "(none)"
+	}
 	d := now.Sub(time.Time(t))
 	s := ""
 	if d >= 0 {
