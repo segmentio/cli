@@ -52,17 +52,10 @@ func (n Number) String() string {
 
 	if d != 0 {
 		r += "."
-		r += trimZeroSuffix(strconv.FormatUint(uint64(math.Round(d*1000)), 10))
+		r += suffix('0').trim(strconv.FormatUint(uint64(math.Round(d*1000)), 10))
 	}
 
 	return r
-}
-
-func trimZeroSuffix(s string) string {
-	for len(s) != 0 && s[len(s)-1] == '0' {
-		s = s[:len(s)-1]
-	}
-	return s
 }
 
 func (n Number) MarshalJSON() ([]byte, error) {

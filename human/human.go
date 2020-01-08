@@ -26,3 +26,16 @@ func parseInt(s string) (int, string, error) {
 func match(s, pattern string) bool {
 	return strings.HasPrefix(pattern, s)
 }
+
+type suffix byte
+
+func (c suffix) trim(s string) string {
+	for len(s) > 1 && s[len(s)-1] == byte(c) {
+		s = s[:len(s)-1]
+	}
+	return s
+}
+
+func (c suffix) match(s string) bool {
+	return len(s) > 0 && s[len(s)-1] == byte(c)
+}
