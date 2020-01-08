@@ -29,7 +29,7 @@ const (
 //	5m30s
 //	1d
 //	4 weeks
-//  1.5y
+//	1.5y
 //	...
 //
 // The current implementation does not support decimal values, however,
