@@ -108,7 +108,7 @@ func parseNextToken(s string) (string, string) {
 	}
 
 	for i, r := range s {
-		if unicode.IsSpace(r) {
+		if isNumberPrefix(r) || unicode.IsSpace(r) {
 			return s[:i], skipSpaces(s[i:])
 		}
 	}
@@ -116,10 +116,10 @@ func parseNextToken(s string) (string, string) {
 	return s, ""
 }
 
-func parseInt(s string) (int, string, error) {
-	s, r := parseNextToken(s)
-	i, err := strconv.Atoi(s)
-	return i, r, err
+func parseFloat(s string) (float64, string, error) {
+	s, r := parseNextNumber(s)
+	f, err := strconv.ParseFloat(s, 64)
+	return f, r, err
 }
 
 func parseUnit(s string) (head, unit string) {
