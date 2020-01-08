@@ -10,14 +10,14 @@ import (
 )
 
 const (
-	nanosecond  = Duration(time.Nanosecond)
-	microsecond = Duration(time.Microsecond)
-	millisecond = Duration(time.Millisecond)
-	second      = Duration(time.Second)
-	minute      = Duration(time.Minute)
-	hour        = Duration(time.Hour)
-	day         = 24 * hour
-	week        = 7 * day
+	Nanosecond  Duration = 1
+	Microsecond Duration = 1000 * Nanosecond
+	Millisecond Duration = 1000 * Microsecond
+	Second      Duration = 1000 * Millisecond
+	Minute      Duration = 60 * Second
+	Hour        Duration = 60 * Minute
+	Day         Duration = 24 * Hour
+	Week        Duration = 7 * Day
 )
 
 type Duration time.Duration
@@ -59,21 +59,21 @@ func parseDuration(s string, n int, now time.Time) (Duration, string, error) {
 	s, r := parseNextToken(s)
 	switch {
 	case match(s, "weeks"):
-		return Duration(n) * week, r, nil
+		return Duration(n) * Week, r, nil
 	case match(s, "days"):
-		return Duration(n) * day, r, nil
+		return Duration(n) * Day, r, nil
 	case match(s, "hours"):
-		return Duration(n) * hour, r, nil
+		return Duration(n) * Hour, r, nil
 	case match(s, "minutes"):
-		return Duration(n) * minute, r, nil
+		return Duration(n) * Minute, r, nil
 	case match(s, "seconds"):
-		return Duration(n) * second, r, nil
+		return Duration(n) * Second, r, nil
 	case match(s, "milliseconds") || s == "ms":
-		return Duration(n) * millisecond, r, nil
+		return Duration(n) * Millisecond, r, nil
 	case match(s, "microseconds") || s == "us" || s == "µs":
-		return Duration(n) * microsecond, r, nil
+		return Duration(n) * Microsecond, r, nil
 	case match(s, "nanoseconds") || s == "ns":
-		return Duration(n) * nanosecond, r, nil
+		return Duration(n) * Nanosecond, r, nil
 	case match(s, "months"):
 		return Duration(now.AddDate(0, n, 0).Sub(now)), r, nil
 	case match(s, "years"):
@@ -92,28 +92,28 @@ func (d Duration) StringUntil(until time.Time) string {
 		return "0s"
 	}
 
-	if d < 31*day {
+	if d < 31*Day {
 		switch {
-		case d < microsecond:
+		case d < Microsecond:
 			return fmt.Sprintf("%dns", d)
-		case d < millisecond:
-			return fmt.Sprintf("%dµs", d/microsecond)
-		case d < second:
-			return fmt.Sprintf("%dms", d/millisecond)
-		case d < minute:
-			return fmt.Sprintf("%ds", d/second)
-		case d < hour:
-			return fmt.Sprintf("%dm", d/minute)
-		case d < day:
-			return fmt.Sprintf("%dh", d/hour)
-		case d >= day && d < 2*day:
+		case d < Millisecond:
+			return fmt.Sprintf("%dµs", d/Microsecond)
+		case d < Second:
+			return fmt.Sprintf("%dms", d/Millisecond)
+		case d < Minute:
+			return fmt.Sprintf("%ds", d/Second)
+		case d < Hour:
+			return fmt.Sprintf("%dm", d/Minute)
+		case d < Day:
+			return fmt.Sprintf("%dh", d/Hour)
+		case d >= Day && d < 2*Day:
 			return "1 day"
-		case d < week:
-			return fmt.Sprintf("%d days", d/day)
-		case d >= week && d < 2*week:
+		case d < Week:
+			return fmt.Sprintf("%d days", d/Day)
+		case d >= Week && d < 2*Week:
 			return "1 week"
 		default:
-			return fmt.Sprintf("%d weeks", d/week)
+			return fmt.Sprintf("%d weeks", d/Week)
 		}
 	}
 
@@ -172,19 +172,19 @@ func (d *Duration) UnmarshalText(b []byte) error {
 
 func (d Duration) Nanoseconds() int { return int(d) }
 
-func (d Duration) Microseconds() int { return int(d) / int(microsecond) }
+func (d Duration) Microseconds() int { return int(d) / int(Microsecond) }
 
-func (d Duration) Milliseconds() int { return int(d) / int(millisecond) }
+func (d Duration) Milliseconds() int { return int(d) / int(Millisecond) }
 
-func (d Duration) Seconds() int { return int(d) / int(second) }
+func (d Duration) Seconds() int { return int(d) / int(Second) }
 
-func (d Duration) Minutes() int { return int(d) / int(minute) }
+func (d Duration) Minutes() int { return int(d) / int(Minute) }
 
-func (d Duration) Hours() int { return int(d) / int(hour) }
+func (d Duration) Hours() int { return int(d) / int(Hour) }
 
-func (d Duration) Days() int { return int(d) / int(day) }
+func (d Duration) Days() int { return int(d) / int(Day) }
 
-func (d Duration) Weeks() int { return int(d) / int(week) }
+func (d Duration) Weeks() int { return int(d) / int(Week) }
 
 func (d Duration) Months(until time.Time) int {
 	if d < 0 {
