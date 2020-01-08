@@ -23,8 +23,23 @@ func parseInt(s string) (int, string, error) {
 	return i, r, err
 }
 
+func parseUnit(s string) (head, unit string) {
+	i := strings.LastIndexFunc(s, func(r rune) bool {
+		return !unicode.IsLetter(r)
+	})
+
+	if i < 0 {
+		head = s
+		return
+	}
+
+	head = strings.TrimRightFunc(s[:i+1], unicode.IsSpace)
+	unit = s[i+1:]
+	return
+}
+
 func match(s, pattern string) bool {
-	return strings.HasPrefix(pattern, s)
+	return len(s) <= len(pattern) && strings.EqualFold(s, pattern[:len(s)])
 }
 
 type suffix byte
