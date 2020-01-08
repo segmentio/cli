@@ -2,6 +2,7 @@ package human
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	yaml "gopkg.in/yaml.v3"
@@ -32,18 +33,21 @@ func TestRateParse(t *testing.T) {
 func TestRateFormat(t *testing.T) {
 	for _, test := range []struct {
 		in   Rate
+		fmt  string
 		out  string
 		unit Duration
 	}{
-		{in: 0, out: "0/s", unit: Second},
-		{in: 1234, out: "1234/s", unit: Second},
-		{in: 10234, out: "10.2K/s", unit: Second},
-		{in: 0.1, out: "100/ms", unit: Millisecond},
-		{in: 604800, out: "1/w", unit: Week},
-		{in: 1512000, out: "2.5/w", unit: Week},
+		{in: 0, fmt: "%v", out: "0/s", unit: Second},
+		{in: 1234, fmt: "%v", out: "1234/s", unit: Second},
+		{in: 10234, fmt: "%v", out: "10.2K/s", unit: Second},
+		{in: 0.1, fmt: "%v", out: "100/ms", unit: Millisecond},
+		{in: 604800, fmt: "%v", out: "1/w", unit: Week},
+		{in: 1512000, fmt: "%v", out: "2.5/w", unit: Week},
+		{in: 25, fmt: "%s", out: "25/s", unit: Second},
+		{in: 25, fmt: "%#v", out: "human.Rate(25)", unit: Second},
 	} {
 		t.Run(test.out, func(t *testing.T) {
-			if s := test.in.Text(test.unit); s != test.out {
+			if s := fmt.Sprintf(test.fmt, test.in.Formatter(test.unit)); s != test.out {
 				t.Error("formatted rate mismatch:", s, "!=", test.out)
 			}
 		})

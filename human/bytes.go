@@ -4,6 +4,7 @@ import (
 	"encoding"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"strconv"
 
@@ -94,23 +95,79 @@ func ParseBytesFloat64(s string) (float64, error) {
 	return f * float64(scale), nil
 }
 
+type byteUnit struct {
+	scale Bytes
+	unit  string
+}
+
+var bytes1000 = [...]byteUnit{
+	{B, "B"},
+	{KB, "KB"},
+	{MB, "MB"},
+	{GB, "GB"},
+	{TB, "TB"},
+	{PB, "PB"},
+}
+
+var bytes1024 = [...]byteUnit{
+	{B, ""},
+	{KiB, "Ki"},
+	{MiB, "Mi"},
+	{GiB, "Gi"},
+	{TiB, "Ti"},
+	{PiB, "Pi"},
+}
+
 func (b Bytes) String() string {
+	return b.formatWith(bytes1024[:])
+}
+
+func (b Bytes) GoString() string {
+	return fmt.Sprintf("human.Bytes(%d)", uint64(b))
+}
+
+// Format satisfies the fmt.Formatter interface.
+//
+// The method supports the following formatting verbs:
+//
+//	d	base 10, unit-less
+//	b	base 10, with unit using 1000 factors
+//	s	base 10, with unit using 1024 factors (same as calling String)
+//	v	same as the 's' format, unless '#' is set to print the go value
+//
+func (b Bytes) Format(w fmt.State, v rune) {
+	io.WriteString(w, b.format(w, v))
+}
+
+func (b Bytes) format(w fmt.State, v rune) string {
+	switch v {
+	case 'd':
+		return strconv.FormatUint(uint64(b), 10)
+	case 'b':
+		return b.formatWith(bytes1000[:])
+	case 's':
+		return b.formatWith(bytes1024[:])
+	case 'v':
+		if w.Flag('#') {
+			return b.GoString()
+		}
+		return b.format(w, 's')
+	default:
+		return printError(v, b, uint64(b))
+	}
+}
+
+func (b Bytes) formatWith(units []byteUnit) string {
 	var scale Bytes
 	var unit string
 
-	switch {
-	case b >= PiB:
-		scale, unit = PiB, "Pi"
-	case b >= TiB:
-		scale, unit = TiB, "Ti"
-	case b >= GiB:
-		scale, unit = GiB, "Gi"
-	case b >= MiB:
-		scale, unit = MiB, "Mi"
-	case b >= KiB:
-		scale, unit = KiB, "Ki"
-	default:
-		scale, unit = B, ""
+	for i := len(units) - 1; i >= 0; i-- {
+		u := units[i]
+
+		if b >= u.scale {
+			scale, unit = u.scale, u.unit
+			break
+		}
 	}
 
 	return ftoa(float64(b), float64(scale)) + unit
@@ -155,7 +212,9 @@ func (b *Bytes) UnmarshalText(t []byte) error {
 }
 
 var (
-	_ fmt.Stringer = Bytes(0)
+	_ fmt.Formatter  = Bytes(0)
+	_ fmt.GoStringer = Bytes(0)
+	_ fmt.Stringer   = Bytes(0)
 
 	_ json.Marshaler   = Bytes(0)
 	_ json.Unmarshaler = (*Bytes)(nil)

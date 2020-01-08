@@ -4,6 +4,7 @@ import (
 	"encoding"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"strconv"
 	"strings"
@@ -68,6 +69,40 @@ func (n Number) String() string {
 	return r
 }
 
+func (n Number) GoString() string {
+	return fmt.Sprintf("human.Number(%v)", float64(n))
+}
+
+// Format satisfies the fmt.Formatter interface.
+//
+// The method supports the following formatting verbs:
+//
+//	e	base 10, separator-free, scientific notation
+//	f	base 10, separator-free, decimal notation
+//	g	base 10, separator-free, act like 'e' or 'f' depending on scale
+//	s	base 10, with separators (same as calling String)
+//	v	same as the 's' format, unless '#' is set to print the go value
+//
+func (n Number) Format(w fmt.State, v rune) {
+	io.WriteString(w, n.format(w, v))
+}
+
+func (n Number) format(w fmt.State, v rune) string {
+	switch v {
+	case 'e', 'f', 'g':
+		return strconv.FormatFloat(float64(n), byte(v), -1, 64)
+	case 's':
+		return n.String()
+	case 'v':
+		if w.Flag('#') {
+			return n.GoString()
+		}
+		return n.format(w, 's')
+	default:
+		return printError(v, n, float64(n))
+	}
+}
+
 func (n Number) MarshalJSON() ([]byte, error) {
 	return json.Marshal(float64(n))
 }
@@ -98,7 +133,9 @@ func (n *Number) UnmarshalText(b []byte) error {
 }
 
 var (
-	_ fmt.Stringer = Number(0)
+	_ fmt.Formatter  = Number(0)
+	_ fmt.GoStringer = Number(0)
+	_ fmt.Stringer   = Number(0)
 
 	_ json.Marshaler   = Number(0)
 	_ json.Unmarshaler = (*Number)(nil)

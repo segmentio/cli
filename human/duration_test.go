@@ -2,6 +2,7 @@ package human
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	yaml "gopkg.in/yaml.v3"
@@ -56,28 +57,35 @@ func TestDurationParse(t *testing.T) {
 func TestDurationFormat(t *testing.T) {
 	for _, test := range []struct {
 		in  Duration
+		fmt string
 		out string
 	}{
-		{out: "0s", in: 0},
+		{fmt: "%v", out: "0s", in: 0},
 
-		{out: "1ns", in: Nanosecond},
-		{out: "1µs", in: Microsecond},
-		{out: "1ms", in: Millisecond},
-		{out: "1s", in: Second},
-		{out: "1m", in: Minute},
-		{out: "1h", in: Hour},
+		{fmt: "%v", out: "1ns", in: Nanosecond},
+		{fmt: "%v", out: "1µs", in: Microsecond},
+		{fmt: "%v", out: "1ms", in: Millisecond},
+		{fmt: "%v", out: "1s", in: Second},
+		{fmt: "%v", out: "1m", in: Minute},
+		{fmt: "%v", out: "1h", in: Hour},
 
-		{out: "1d", in: 24 * Hour},
-		{out: "2d", in: 48 * Hour},
-		{out: "1w", in: 7 * 24 * Hour},
-		{out: "2w", in: 14 * 24 * Hour},
-		{out: "1mo", in: 33 * 24 * Hour},
-		{out: "2mo", in: 66 * 24 * Hour},
-		{out: "1y", in: 400 * 24 * Hour},
-		{out: "2y", in: 800 * 24 * Hour},
+		{fmt: "%v", out: "1d", in: 24 * Hour},
+		{fmt: "%v", out: "2d", in: 48 * Hour},
+		{fmt: "%v", out: "1w", in: 7 * 24 * Hour},
+		{fmt: "%v", out: "2w", in: 14 * 24 * Hour},
+		{fmt: "%v", out: "1mo", in: 33 * 24 * Hour},
+		{fmt: "%v", out: "2mo", in: 66 * 24 * Hour},
+		{fmt: "%v", out: "1y", in: 400 * 24 * Hour},
+		{fmt: "%v", out: "2y", in: 800 * 24 * Hour},
+
+		{fmt: "%v", out: "1m30s", in: 1*Minute + 30*Second},
+		{fmt: "%+.1v", out: "2 hours", in: 2*Hour + 1*Minute + 30*Second},
+		{fmt: "%+.2v", out: "2 hours 1 minute", in: 2*Hour + 1*Minute + 30*Second},
+		{fmt: "%+.3v", out: "2 hours 1 minute 30 seconds", in: 2*Hour + 1*Minute + 30*Second},
+		{fmt: "%#v", out: "human.Duration(60000000000)", in: 1 * Minute},
 	} {
 		t.Run(test.out, func(t *testing.T) {
-			if s := test.in.String(); s != test.out {
+			if s := fmt.Sprintf(test.fmt, test.in); s != test.out {
 				t.Error("duration string mismatch:", s, "!=", test.out)
 			}
 		})

@@ -4,6 +4,7 @@ import (
 	"encoding"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 	"unicode"
@@ -29,6 +30,10 @@ func ParseTime(s string) (Time, error) {
 }
 
 func ParseTimeAt(s string, now time.Time) (Time, error) {
+	if s == "now" {
+		return Time(now), nil
+	}
+
 	if strings.HasSuffix(s, " ago") {
 		s = strings.TrimLeftFunc(s[:len(s)-4], unicode.IsSpace)
 		d, err := ParseDurationUntil(s, now)
@@ -78,22 +83,70 @@ func (t Time) IsZero() bool {
 }
 
 func (t Time) String() string {
-	return t.Text(time.Now())
+	return t.text(time.Now(), Duration.String)
+}
+
+func (t Time) GoString() string {
+	return fmt.Sprintf("human.Time{s:%d,ns:%d}",
+		time.Time(t).Unix(),
+		time.Time(t).Nanosecond())
+}
+
+// Format satisfies the fmt.Formatter interface.
+//
+// The method supports the following formatting verbs:
+//
+//	s	duration relative to now (same as calling String)
+//	v	sam as the 's' format, unless '#' is set to print the go value
+//
+// The 's' and 'v' formatting verbs also interpret the options:
+//
+//	+	outputs full names of the time units instead of abbreviations
+//	.	followed by a digit to limit the precision of the output
+//
+func (t Time) Format(w fmt.State, v rune) {
+	t.formatAt(w, v, time.Now())
+}
+
+func (t Time) formatAt(w fmt.State, v rune, now time.Time) {
+	io.WriteString(w, t.format(w, v, now))
+}
+
+func (t Time) format(w fmt.State, v rune, now time.Time) string {
+	switch v {
+	case 's':
+		return t.text(now, func(d Duration) string { return d.format(w, v, now) })
+	case 'v':
+		if w.Flag('#') {
+			return t.GoString()
+		}
+		return t.format(w, 's', now)
+	default:
+		return printError(v, t, time.Time(t))
+	}
 }
 
 func (t Time) Text(now time.Time) string {
+	return t.text(now, func(d Duration) string { return d.Text(now) })
+}
+
+func (t Time) text(now time.Time, format func(Duration) string) string {
 	if t.IsZero() {
 		return "(none)"
 	}
-	d := now.Sub(time.Time(t))
-	s := ""
-	if d >= 0 {
-		s = " ago"
-	} else {
-		s = " later"
-		d = -d
+	d := Duration(now.Sub(time.Time(t)))
+	switch {
+	case d > 0:
+		return format(d) + " ago"
+	case d < 0:
+		return format(-d) + " later"
+	default:
+		return "now"
 	}
-	return Duration(d).Text(now) + s
+}
+
+func (t Time) Formatter(now time.Time) fmt.Formatter {
+	return formatter(func(w fmt.State, v rune) { t.formatAt(w, v, now) })
 }
 
 func (t Time) MarshalJSON() ([]byte, error) {
@@ -135,7 +188,9 @@ func (t *Time) UnmarshalText(b []byte) error {
 }
 
 var (
-	_ fmt.Stringer = Time{}
+	_ fmt.Formatter  = Time{}
+	_ fmt.GoStringer = Time{}
+	_ fmt.Stringer   = Time{}
 
 	_ json.Marshaler   = Time{}
 	_ json.Unmarshaler = (*Time)(nil)

@@ -2,6 +2,7 @@ package human
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	yaml "gopkg.in/yaml.v3"
@@ -34,15 +35,17 @@ func TestRatioParse(t *testing.T) {
 func TestRatioFormat(t *testing.T) {
 	for _, test := range []struct {
 		in  Ratio
+		fmt string
 		out string
 	}{
-		{in: 0, out: "0%"},
-		{in: 0.1234, out: "12.34%"},
-		{in: 1, out: "100%"},
-		{in: 2, out: "200%"},
+		{in: 0, fmt: "%v", out: "0%"},
+		{in: 0.1234, fmt: "%v", out: "12.34%"},
+		{in: 1, fmt: "%v", out: "100%"},
+		{in: 2, fmt: "%v", out: "200%"},
+		{in: 0.234, fmt: "%#v", out: "human.Ratio(0.234)"},
 	} {
 		t.Run(test.out, func(t *testing.T) {
-			if s := test.in.String(); s != test.out {
+			if s := fmt.Sprintf(test.fmt, test.in); s != test.out {
 				t.Error("formatted ratio mismatch:", s, "!=", test.out)
 			}
 		})

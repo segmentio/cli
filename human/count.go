@@ -4,6 +4,8 @@ import (
 	"encoding"
 	"encoding/json"
 	"fmt"
+	"io"
+	"math"
 	"strconv"
 
 	yaml "gopkg.in/yaml.v3"
@@ -79,6 +81,43 @@ func (c Count) String() string {
 	return ftoa(f, float64(scale)) + unit
 }
 
+func (c Count) GoString() string {
+	return fmt.Sprintf("human.Count(%v)", float64(c))
+}
+
+// Format satisfies the fmt.Formatter interface.
+//
+// The method supports the following formatting verbs:
+//
+//	d	base 10, unit-less, rounded to the nearest integer
+//	e	base 10, unit-less, scientific notation
+//	f	base 10, unit-less, decimal notation
+//	g	base 10, unit-less, act like 'e' or 'f' depending on scale
+//	s	base 10, with unit (same as calling String)
+//	v	same as the 's' format, unless '#' is set to print the go value
+//
+func (c Count) Format(w fmt.State, v rune) {
+	io.WriteString(w, c.format(w, v))
+}
+
+func (c Count) format(w fmt.State, v rune) string {
+	switch v {
+	case 'd':
+		return ftoa(math.Round(float64(c)), 1)
+	case 'e', 'f', 'g':
+		return strconv.FormatFloat(float64(c), byte(v), -1, 64)
+	case 's':
+		return c.String()
+	case 'v':
+		if w.Flag('#') {
+			return c.GoString()
+		}
+		return c.format(w, 's')
+	default:
+		return printError(v, c, float64(c))
+	}
+}
+
 func (c Count) MarshalJSON() ([]byte, error) {
 	return json.Marshal(float64(c))
 }
@@ -118,7 +157,9 @@ func (c *Count) UnmarshalText(b []byte) error {
 }
 
 var (
-	_ fmt.Stringer = Count(0)
+	_ fmt.Formatter  = Count(0)
+	_ fmt.GoStringer = Count(0)
+	_ fmt.Stringer   = Count(0)
 
 	_ json.Marshaler   = Count(0)
 	_ json.Unmarshaler = (*Count)(nil)

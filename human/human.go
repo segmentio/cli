@@ -199,3 +199,11 @@ func ftoa(value, scale float64) string {
 	}
 	return s
 }
+
+func printError(verb rune, typ, val interface{}) string {
+	return fmt.Sprintf("%%!%c(%T=%v)", verb, typ, val)
+}
+
+type formatter func(fmt.State, rune)
+
+func (f formatter) Format(w fmt.State, v rune) { f(w, v) }

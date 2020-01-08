@@ -4,7 +4,10 @@ import (
 	"encoding"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math"
+	"strconv"
+	"strings"
 	"time"
 
 	yaml "gopkg.in/yaml.v3"
@@ -107,48 +110,194 @@ func parseDuration(s string, n float64, now time.Time) (Duration, string, error)
 	}
 }
 
-func (d Duration) String() string {
-	return d.Text(time.Now())
+type durationUnits struct {
+	nanosecond  string
+	microsecond string
+	millisecond string
+	second      string
+	minute      string
+	hour        string
+	day         string
+	week        string
+	month       string
+	year        string
+	separator   string
 }
 
-func (d Duration) Text(until time.Time) string {
+func (durationUnits) fix(n int, s string) string {
+	if n == 1 && len(s) > 3 {
+		return s[:len(s)-1] // trim tralinig 's' on long units
+	}
+	return s
+}
+
+var durationsShort = durationUnits{
+	nanosecond:  "ns",
+	microsecond: "µs",
+	millisecond: "ms",
+	second:      "s",
+	minute:      "m",
+	hour:        "h",
+	day:         "d",
+	week:        "w",
+	month:       "mo",
+	year:        "y",
+	separator:   "",
+}
+
+var durationsLong = durationUnits{
+	nanosecond:  "nanoseconds",
+	microsecond: "microseconds",
+	millisecond: "milliseconds",
+	second:      "seconds",
+	minute:      "minutes",
+	hour:        "hours",
+	day:         "days",
+	week:        "weeks",
+	month:       "months",
+	year:        "years",
+	separator:   " ",
+}
+
+func (d Duration) String() string {
+	return d.text(time.Now(), d.defaultLimit(), durationsShort)
+}
+
+func (d Duration) GoString() string {
+	return fmt.Sprintf("human.Duration(%d)", int64(d))
+}
+
+// Format satisfies the fmt.Formatter interface.
+//
+// The method supports the following formatting verbs:
+//
+//	s	outputs a string representation of the duration (same as calling String)
+//	v	same as the 's' format, unless '#' is set to print the go value
+//
+// The 's' and 'v' formatting verbs also interpret the options:
+//
+//	+	outputs full names of the time units instead of abbreviations
+//	.	followed by a digit to limit the precision of the output
+//
+func (d Duration) Format(w fmt.State, v rune) {
+	d.formatUntil(w, v, time.Now())
+}
+
+func (d Duration) formatUntil(w fmt.State, v rune, now time.Time) {
+	io.WriteString(w, d.format(w, v, now))
+}
+
+func (d Duration) format(w fmt.State, v rune, now time.Time) string {
+	switch v {
+	case 's':
+		var limit int
+		var units durationUnits
+
+		limit, ok := w.Precision()
+		if !ok {
+			limit = d.defaultLimit()
+		}
+
+		if w.Flag('+') {
+			units = durationsLong
+		} else {
+			units = durationsShort
+		}
+
+		return d.text(now, limit, units)
+	case 'v':
+		if w.Flag('#') {
+			return d.GoString()
+		}
+		return d.format(w, 's', now)
+	default:
+		return printError(v, d, uint64(d))
+	}
+}
+
+func (d Duration) Text(now time.Time) string {
+	return d.text(now, d.defaultLimit(), durationsLong)
+}
+
+func (d Duration) text(now time.Time, limit int, units durationUnits) string {
 	if d == 0 {
-		return "0s"
+		return "0" + units.separator + units.second
+	}
+
+	if d == Duration(math.MaxInt64) || d == Duration(math.MinInt64) {
+		return "a while" // special values for unknown durations
 	}
 
 	if d < 0 {
-		if d == Duration(math.MinInt64) {
-			return "-272y"
+		return "-" + (-d).text(now, limit, units)
+	}
+
+	var n int
+	var s strings.Builder
+
+	for i := 0; d != 0; i++ {
+		var unit string
+
+		if i != 0 {
+			s.WriteString(units.separator)
 		}
-		return "-" + (-d).Text(until)
-	}
 
-	if d < 31*Day {
-		switch {
-		case d < Microsecond:
-			return fmt.Sprintf("%dns", d)
-		case d < Millisecond:
-			return fmt.Sprintf("%dµs", d/Microsecond)
-		case d < Second:
-			return fmt.Sprintf("%dms", d/Millisecond)
-		case d < Minute:
-			return fmt.Sprintf("%ds", d/Second)
-		case d < Hour:
-			return fmt.Sprintf("%dm", d/Minute)
-		case d < Day:
-			return fmt.Sprintf("%dh", d/Hour)
-		case d < Week:
-			return fmt.Sprintf("%dd", d/Day)
-		default:
-			return fmt.Sprintf("%dw", d/Week)
+		if d < 31*Day {
+			var scale Duration
+
+			switch {
+			case d < Microsecond:
+				scale, unit = Nanosecond, units.nanosecond
+			case d < Millisecond:
+				scale, unit = Microsecond, units.microsecond
+			case d < Second:
+				scale, unit = Millisecond, units.millisecond
+			case d < Minute:
+				scale, unit = Second, units.second
+			case d < Hour:
+				scale, unit = Minute, units.minute
+			case d < Day:
+				scale, unit = Hour, units.hour
+			case d < Week:
+				scale, unit = Day, units.day
+			default:
+				scale, unit = Week, units.week
+			}
+
+			n = int(d / scale)
+			d -= Duration(n) * scale
+
+		} else if n = d.Years(now); n != 0 {
+			d -= Duration(now.Sub(now.AddDate(-n, 0, 0)))
+			unit = units.year
+
+		} else {
+			n = d.Months(now)
+			d -= Duration(now.Sub(now.AddDate(0, -n, 0)))
+			unit = units.month
+		}
+
+		s.WriteString(strconv.Itoa(n))
+		s.WriteString(units.separator)
+		s.WriteString(units.fix(n, unit))
+
+		if limit--; limit == 0 {
+			break
 		}
 	}
 
-	if y := d.Years(until); y != 0 {
-		return fmt.Sprintf("%dy", y)
-	}
+	return s.String()
+}
 
-	return fmt.Sprintf("%dmo", d.Months(until))
+func (d Duration) defaultLimit() int {
+	if d < Day {
+		return 3
+	}
+	return 1
+}
+
+func (d Duration) Formatter(now time.Time) fmt.Formatter {
+	return formatter(func(w fmt.State, v rune) { d.formatUntil(w, v, now) })
 }
 
 func (d Duration) MarshalJSON() ([]byte, error) {
@@ -238,7 +387,9 @@ func (d Duration) Years(until time.Time) int {
 }
 
 var (
-	_ fmt.Stringer = Duration(0)
+	_ fmt.Formatter  = Duration(0)
+	_ fmt.GoStringer = Duration(0)
+	_ fmt.Stringer   = Duration(0)
 
 	_ json.Marshaler   = Duration(0)
 	_ json.Unmarshaler = (*Duration)(nil)
