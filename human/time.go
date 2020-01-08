@@ -175,7 +175,7 @@ func (t *Time) UnmarshalYAML(y *yaml.Node) error {
 }
 
 func (t Time) MarshalText() ([]byte, error) {
-	return []byte(t.String()), nil
+	return []byte(t.Text(time.Now())), nil
 }
 
 func (t *Time) UnmarshalText(b []byte) error {
