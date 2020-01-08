@@ -59,14 +59,14 @@ func TestDurationFormat(t *testing.T) {
 		{out: "1m", in: Minute},
 		{out: "1h", in: Hour},
 
-		{out: "1 day", in: 24 * Hour},
-		{out: "2 days", in: 48 * Hour},
-		{out: "1 week", in: 7 * 24 * Hour},
-		{out: "2 weeks", in: 14 * 24 * Hour},
-		{out: "1 month", in: 33 * 24 * Hour},
-		{out: "2 months", in: 66 * 24 * Hour},
-		{out: "1 year", in: 400 * 24 * Hour},
-		{out: "2 years", in: 800 * 24 * Hour},
+		{out: "1d", in: 24 * Hour},
+		{out: "2d", in: 48 * Hour},
+		{out: "1w", in: 7 * 24 * Hour},
+		{out: "2w", in: 14 * 24 * Hour},
+		{out: "1mo", in: 33 * 24 * Hour},
+		{out: "2mo", in: 66 * 24 * Hour},
+		{out: "1y", in: 400 * 24 * Hour},
+		{out: "2y", in: 800 * 24 * Hour},
 	} {
 		t.Run(test.out, func(t *testing.T) {
 			if s := test.in.String(); s != test.out {

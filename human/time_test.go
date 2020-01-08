@@ -88,14 +88,14 @@ func TestTimeFormat(t *testing.T) {
 		{out: "1m ago", in: -Minute},
 		{out: "1h ago", in: -Hour},
 
-		{out: "1 day ago", in: -24 * Hour},
-		{out: "2 days ago", in: -48 * Hour},
-		{out: "1 week ago", in: -7 * 24 * Hour},
-		{out: "2 weeks ago", in: -14 * 24 * Hour},
-		{out: "1 month ago", in: -33 * 24 * Hour},
-		{out: "2 months ago", in: -66 * 24 * Hour},
-		{out: "1 year ago", in: -400 * 24 * Hour},
-		{out: "2 years ago", in: -800 * 24 * Hour},
+		{out: "1d ago", in: -24 * Hour},
+		{out: "2d ago", in: -48 * Hour},
+		{out: "1w ago", in: -7 * 24 * Hour},
+		{out: "2w ago", in: -14 * 24 * Hour},
+		{out: "1mo ago", in: -33 * 24 * Hour},
+		{out: "2mo ago", in: -66 * 24 * Hour},
+		{out: "1y ago", in: -400 * 24 * Hour},
+		{out: "2y ago", in: -800 * 24 * Hour},
 
 		{out: "1ns later", in: Nanosecond},
 		{out: "1µs later", in: Microsecond},
@@ -104,17 +104,17 @@ func TestTimeFormat(t *testing.T) {
 		{out: "1m later", in: Minute},
 		{out: "1h later", in: Hour},
 
-		{out: "1 day later", in: 24 * Hour},
-		{out: "2 days later", in: 48 * Hour},
-		{out: "1 week later", in: 7 * 24 * Hour},
-		{out: "2 weeks later", in: 14 * 24 * Hour},
-		{out: "1 month later", in: 33 * 24 * Hour},
-		{out: "2 months later", in: 66 * 24 * Hour},
-		{out: "1 year later", in: 400 * 24 * Hour},
-		{out: "2 years later", in: 800 * 24 * Hour},
+		{out: "1d later", in: 24 * Hour},
+		{out: "2d later", in: 48 * Hour},
+		{out: "1w later", in: 7 * 24 * Hour},
+		{out: "2w later", in: 14 * 24 * Hour},
+		{out: "1mo later", in: 33 * 24 * Hour},
+		{out: "2mo later", in: 66 * 24 * Hour},
+		{out: "1y later", in: 400 * 24 * Hour},
+		{out: "2y later", in: 800 * 24 * Hour},
 	} {
 		t.Run(test.out, func(t *testing.T) {
-			if s := Time(now.Add(time.Duration(test.in))).StringAt(now); s != test.out {
+			if s := Time(now.Add(time.Duration(test.in))).Text(now); s != test.out {
 				t.Error("time string mismatch:", s, "!=", test.out)
 			}
 		})

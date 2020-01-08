@@ -96,10 +96,7 @@ func (b Bytes) String() string {
 		scale, unit = B, ""
 	}
 
-	s := fmt.Sprintf("%.3f", float64(b)/float64(scale))
-	s = suffix('0').trim(s)
-	s = suffix('.').trim(s)
-	return s + unit
+	return ftoa(float64(b), float64(scale)) + unit
 }
 
 func (b Bytes) MarshalJSON() ([]byte, error) {

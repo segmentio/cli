@@ -4,6 +4,7 @@ import (
 	"encoding"
 	"encoding/json"
 	"fmt"
+	"math"
 	"time"
 
 	yaml "gopkg.in/yaml.v3"
@@ -68,11 +69,11 @@ func parseDuration(s string, n int, now time.Time) (Duration, string, error) {
 		return Duration(n) * Minute, r, nil
 	case match(s, "seconds"):
 		return Duration(n) * Second, r, nil
-	case match(s, "milliseconds") || s == "ms":
+	case match(s, "milliseconds"), s == "ms":
 		return Duration(n) * Millisecond, r, nil
-	case match(s, "microseconds") || s == "us" || s == "µs":
+	case match(s, "microseconds"), s == "us", s == "µs":
 		return Duration(n) * Microsecond, r, nil
-	case match(s, "nanoseconds") || s == "ns":
+	case match(s, "nanoseconds"), s == "ns":
 		return Duration(n) * Nanosecond, r, nil
 	case match(s, "months"):
 		return Duration(now.AddDate(0, n, 0).Sub(now)), r, nil
@@ -84,12 +85,19 @@ func parseDuration(s string, n int, now time.Time) (Duration, string, error) {
 }
 
 func (d Duration) String() string {
-	return d.StringUntil(time.Now())
+	return d.Text(time.Now())
 }
 
-func (d Duration) StringUntil(until time.Time) string {
+func (d Duration) Text(until time.Time) string {
 	if d == 0 {
 		return "0s"
+	}
+
+	if d < 0 {
+		if d == Duration(math.MinInt64) {
+			return "-272y"
+		}
+		return "-" + (-d).Text(until)
 	}
 
 	if d < 31*Day {
@@ -106,30 +114,18 @@ func (d Duration) StringUntil(until time.Time) string {
 			return fmt.Sprintf("%dm", d/Minute)
 		case d < Day:
 			return fmt.Sprintf("%dh", d/Hour)
-		case d >= Day && d < 2*Day:
-			return "1 day"
 		case d < Week:
-			return fmt.Sprintf("%d days", d/Day)
-		case d >= Week && d < 2*Week:
-			return "1 week"
+			return fmt.Sprintf("%dd", d/Day)
 		default:
-			return fmt.Sprintf("%d weeks", d/Week)
+			return fmt.Sprintf("%dw", d/Week)
 		}
 	}
 
-	switch years := d.Years(until); {
-	case years == 1:
-		return "1 year"
-	case years > 1:
-		return fmt.Sprintf("%d years", years)
+	if y := d.Years(until); y != 0 {
+		return fmt.Sprintf("%dy", y)
 	}
 
-	switch months := d.Months(until); {
-	case months == 1:
-		return "1 month"
-	default:
-		return fmt.Sprintf("%d months", months)
-	}
+	return fmt.Sprintf("%dmo", d.Months(until))
 }
 
 func (d Duration) MarshalJSON() ([]byte, error) {

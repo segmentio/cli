@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	yaml "gopkg.in/yaml.v3"
 )
@@ -30,8 +31,10 @@ func (r Ratio) String() string {
 
 func (r Ratio) Text(precision int) string {
 	s := strconv.FormatFloat(100*float64(r), 'f', precision, 64)
-	s = suffix('0').trim(s)
-	s = suffix('.').trim(s)
+	if strings.Contains(s, ".") {
+		s = suffix('0').trim(s)
+		s = suffix('.').trim(s)
+	}
 	return s + "%"
 }
 

@@ -54,11 +54,11 @@ func TestBytesFormat(t *testing.T) {
 		{out: "0", in: 0},
 		{out: "2", in: 2},
 
-		{out: "1.953Ki", in: 2 * KB},
-		{out: "1.907Mi", in: 2 * MB},
-		{out: "1.863Gi", in: 2 * GB},
-		{out: "1.819Ti", in: 2 * TB},
-		{out: "1.776Pi", in: 2 * PB},
+		{out: "1.95Ki", in: 2 * KB},
+		{out: "1.91Mi", in: 2 * MB},
+		{out: "1.86Gi", in: 2 * GB},
+		{out: "1.82Ti", in: 2 * TB},
+		{out: "1.78Pi", in: 2 * PB},
 
 		{out: "2Ki", in: 2 * KiB},
 		{out: "2Mi", in: 2 * MiB},
@@ -66,8 +66,8 @@ func TestBytesFormat(t *testing.T) {
 		{out: "2Ti", in: 2 * TiB},
 		{out: "2Pi", in: 2 * PiB},
 
-		{out: "1.205Ki", in: 1234},
-		{out: "1.177Mi", in: 1234 * KB},
+		{out: "1.21Ki", in: 1234},
+		{out: "1.18Mi", in: 1234 * KB},
 
 		{out: "1.5Ki", in: 1*KiB + 512},
 		{out: "1.5Mi", in: 1*MiB + 512*KiB},

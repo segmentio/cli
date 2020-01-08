@@ -67,10 +67,10 @@ func (t Time) IsZero() bool {
 }
 
 func (t Time) String() string {
-	return t.StringAt(time.Now())
+	return t.Text(time.Now())
 }
 
-func (t Time) StringAt(now time.Time) string {
+func (t Time) Text(now time.Time) string {
 	if t.IsZero() {
 		return "(none)"
 	}
@@ -82,7 +82,7 @@ func (t Time) StringAt(now time.Time) string {
 		s = " later"
 		d = -d
 	}
-	return Duration(d).StringUntil(now) + s
+	return Duration(d).Text(now) + s
 }
 
 func (t Time) MarshalJSON() ([]byte, error) {
