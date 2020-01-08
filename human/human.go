@@ -1,5 +1,31 @@
 // Package human provides types that support parsing and formatting
 // human-friendly representations of values in various units.
+//
+// The package only exposes type names that are not that common to find in Go
+// programs (in our experience). For that reason, it can be interesting to
+// import the package as '.' (dot) to inject the symbols in the namespace of the
+// importer, especially in the common case where it's being used in the main
+// package of a program, for example:
+//
+//	import (
+//		. "github.com/segmentio/cli/human"
+//	)
+//
+// This can help improve code readability by importing constants in the package
+// namespace, allowing constructs like:
+//
+//	type clientConfig{
+//		DialTimeout Duration
+//		BufferSize  Bytes
+//		RateLimit   Rate
+//	}
+//	...
+//	config := clientConfig{
+//		DialTimeout: 10 * Second,
+//		BufferSize:  64 * KiB,
+//		RateLimit:   20 * PerSecond,
+//	}
+//
 package human
 
 import (

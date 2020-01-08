@@ -10,6 +10,17 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
+// Ratio represents percentage-like values.
+//
+// The type supports parsing and formatting values like:
+//
+//	0.1
+//	25%
+//	0.5 %
+//	...
+//
+// Ratio values are stored as floating pointer numbers between 0 and 1 (assuming
+// they stay within the 0-100% bounds), and formatted as percentages.
 type Ratio float64
 
 func ParseRatio(s string) (Ratio, error) {
@@ -18,7 +29,7 @@ func ParseRatio(s string) (Ratio, error) {
 
 	if p.match(s) {
 		k = 100.0
-		s = s[:len(s)-1]
+		s = trimSpaces(s[:len(s)-1])
 	}
 
 	f, err := strconv.ParseFloat(s, 64)

@@ -9,6 +9,15 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
+// Count represents a count without a unit.
+//
+// The type supports parsing and formatting values like:
+//
+//	1234
+//	10 K
+//	1.5M
+//	...
+//
 type Count float64
 
 const (

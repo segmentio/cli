@@ -11,6 +11,17 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
+// Time represents absolute point in times. The implementation is based on
+// time.Time.
+//
+// The type supports all default time formats provided by the standard time
+// package, as well as parsing and formatting values relative to a given time
+// point, for example:
+//
+//	5 minutes ago
+//	1h later
+//	...
+//
 type Time time.Time
 
 func ParseTime(s string) (Time, error) {

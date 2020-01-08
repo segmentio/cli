@@ -10,6 +10,23 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
+// Bytes represents a number of bytes.
+//
+// The type support parsing values in formats like:
+//
+//	42 KB
+//	8Gi
+//	1.5KiB
+//	...
+//
+// Two models are supported, using factors of 1000 and factors of 1024 via units
+// like KB, MB, GB for the former, or Ki, Mi, MiB for the latter.
+//
+// In the current implementation, formatting is always done in factors of 1024,
+// using units like Ki, Mi, Gi etc...
+//
+// Values may be decimals when using units larger than B. Partial bytes cannot
+// be represnted (e.g. 0.5B is not supported).
 type Bytes uint64
 
 const (

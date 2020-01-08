@@ -10,6 +10,17 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
+// Rate represents a count devided by a unit of time.
+//
+// The type supports parsing and formatting values like:
+//
+//	200/s
+//	1 / minute
+//	0.5/week
+//	...
+//
+// Rate values are always stored in their per-second form in Go programs,
+// and properly converted during parsing and formatting.
 type Rate float64
 
 const (

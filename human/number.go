@@ -11,6 +11,16 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
+// Number is similar to Count, but supports values with separators for
+// readability purposes.
+//
+// The type supports parsing and formatting values likes:
+//
+//	123
+//	1.5
+//	2,000,000
+//	...
+//
 type Number float64
 
 func ParseNumber(s string) (Number, error) {

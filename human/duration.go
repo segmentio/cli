@@ -21,6 +21,25 @@ const (
 	Week        Duration = 7 * Day
 )
 
+// Duration is based on time.Duration, but supports parsing and formatting
+// more human-friendly representations.
+//
+// Here are examples of supported values:
+//
+//	1d
+//	4 weeks
+//	...
+//
+// The current implementation does not support decimal values, however,
+// contributions are welcome to add this feature.
+//
+// Time being what it is, months and years are hard to represent because their
+// durations vary in unpredictable ways. This is why the package only exposes
+// constants up to a 1 week duration. For the sake of accuracy, years and months
+// are always represented relative to a given date. Technically, leap seconds
+// can cause any unit above the second to be variable, but in order to remain
+// mentaly sane, we chose to ignore this detail in the implementation of this
+// package.
 type Duration time.Duration
 
 func ParseDuration(s string) (Duration, error) {
@@ -38,6 +57,8 @@ func ParseDurationUntil(s string, now time.Time) (Duration, error) {
 			break
 		}
 
+		// TODO: we should probably support floating point numbers here to
+		// represent values like "1.5 years".
 		n, r, err := parseInt(s)
 		if err != nil {
 			return 0, fmt.Errorf("malformed duration: %s: %w", input, err)
