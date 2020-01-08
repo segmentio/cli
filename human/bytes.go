@@ -30,6 +30,12 @@ const (
 
 func ParseBytes(s string) (Bytes, error) {
 	f, err := ParseBytesFloat64(s)
+	if err != nil {
+		return 0, err
+	}
+	if f < 0 {
+		return 0, fmt.Errorf("invalid negative byte count: %q", s)
+	}
 	return Bytes(math.Floor(f)), err
 }
 
