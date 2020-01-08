@@ -21,6 +21,11 @@ func TestDurationParse(t *testing.T) {
 		{in: "1m", out: Minute},
 		{in: "1h", out: Hour},
 
+		{in: "1d", out: 24 * Hour},
+		{in: "2d", out: 48 * Hour},
+		{in: "1w", out: 7 * 24 * Hour},
+		{in: "2w", out: 14 * 24 * Hour},
+
 		{in: "1 nanosecond", out: Nanosecond},
 		{in: "1 microsecond", out: Microsecond},
 		{in: "1 millisecond", out: Millisecond},

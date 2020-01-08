@@ -9,12 +9,86 @@ import (
 	"unicode"
 )
 
-func parseNextToken(s string) (string, string) {
-	for i, r := range s {
-		if unicode.IsSpace(r) {
-			return s[:i], strings.TrimLeftFunc(s[i:], unicode.IsSpace)
+func isDot(r rune) bool {
+	return r == '.'
+}
+
+func isExp(r rune) bool {
+	return r == 'e' || r == 'E'
+}
+
+func isSign(r rune) bool {
+	return r == '-' || r == '+'
+}
+
+func isNumberPrefix(r rune) bool {
+	return isSign(r) || unicode.IsDigit(r)
+}
+
+func hasPrefixFunc(s string, f func(rune) bool) bool {
+	for _, r := range s {
+		return f(r)
+	}
+	return false
+}
+
+func countPrefixFunc(s string, f func(rune) bool) int {
+	var i int
+	var r rune
+
+	for i, r = range s {
+		if !f(r) {
+			break
 		}
 	}
+
+	return i
+}
+
+func skipSpaces(s string) string {
+	return strings.TrimLeftFunc(s, unicode.IsSpace)
+}
+
+func trimSpaces(s string) string {
+	return strings.TrimRightFunc(s, unicode.IsSpace)
+}
+
+func parseNextNumber(s string) (string, string) {
+	i := 0
+
+	// integer part
+	i += countPrefixFunc(s[i:], isSign) // - or +
+	i += countPrefixFunc(s[i:], unicode.IsDigit)
+
+	// decimal part
+	if hasPrefixFunc(s[i:], isDot) {
+		i++ // .
+		i += countPrefixFunc(s[i:], unicode.IsDigit)
+	}
+
+	// exponent part
+	if hasPrefixFunc(s[i:], isExp) {
+		i++ // e or E
+		if hasPrefixFunc(s[i:], isSign) {
+			i++ // - or +
+		}
+		i += countPrefixFunc(s[i:], unicode.IsDigit)
+	}
+
+	return s[:i], skipSpaces(s[i:])
+}
+
+func parseNextToken(s string) (string, string) {
+	if hasPrefixFunc(s, isNumberPrefix) {
+		return parseNextNumber(s)
+	}
+
+	for i, r := range s {
+		if unicode.IsSpace(r) {
+			return s[:i], skipSpaces(s[i:])
+		}
+	}
+
 	return s, ""
 }
 
@@ -34,7 +108,7 @@ func parseUnit(s string) (head, unit string) {
 		return
 	}
 
-	head = strings.TrimRightFunc(s[:i+1], unicode.IsSpace)
+	head = trimSpaces(s[:i+1])
 	unit = s[i+1:]
 	return
 }
