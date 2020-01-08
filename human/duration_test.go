@@ -37,6 +37,9 @@ func TestDurationParse(t *testing.T) {
 		{in: "2 days", out: 48 * Hour},
 		{in: "1 week", out: 7 * 24 * Hour},
 		{in: "2 weeks", out: 14 * 24 * Hour},
+
+		{in: "1m30s", out: 1*Minute + 30*Second},
+		{in: "1.5m", out: 1*Minute + 30*Second},
 	} {
 		t.Run(test.in, func(t *testing.T) {
 			d, err := ParseDuration(test.in)

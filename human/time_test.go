@@ -58,6 +58,8 @@ func TestTimeParse(t *testing.T) {
 		{in: "1 week later", out: 7 * 24 * Hour},
 		{in: "2 weeks later", out: 14 * 24 * Hour},
 
+		{in: "1.5m ago", out: -1*Minute - 30*Second},
+
 		{in: end.Format(time.RFC3339Nano), out: 1 * Second},
 	} {
 		t.Run(test.in, func(t *testing.T) {

@@ -26,8 +26,10 @@ const (
 //
 // Here are examples of supported values:
 //
+//	5m30s
 //	1d
 //	4 weeks
+//  1.5y
 //	...
 //
 // The current implementation does not support decimal values, however,
@@ -50,16 +52,12 @@ func ParseDurationUntil(s string, now time.Time) (Duration, error) {
 	var d Duration
 	var input = s
 
-	for len(s) != 0 {
-		p, err := time.ParseDuration(s)
-		if err == nil {
-			d += Duration(p)
-			break
-		}
+	if s == "0" {
+		return 0, nil
+	}
 
-		// TODO: we should probably support floating point numbers here to
-		// represent values like "1.5 years".
-		n, r, err := parseInt(s)
+	for len(s) != 0 {
+		n, r, err := parseFloat(s)
 		if err != nil {
 			return 0, fmt.Errorf("malformed duration: %s: %w", input, err)
 		}
@@ -77,29 +75,33 @@ func ParseDurationUntil(s string, now time.Time) (Duration, error) {
 	return d, nil
 }
 
-func parseDuration(s string, n int, now time.Time) (Duration, string, error) {
+func parseDuration(s string, n float64, now time.Time) (Duration, string, error) {
 	s, r := parseNextToken(s)
 	switch {
 	case match(s, "weeks"):
-		return Duration(n) * Week, r, nil
+		return Duration(n * float64(Week)), r, nil
 	case match(s, "days"):
-		return Duration(n) * Day, r, nil
+		return Duration(n * float64(Day)), r, nil
 	case match(s, "hours"):
-		return Duration(n) * Hour, r, nil
+		return Duration(n * float64(Hour)), r, nil
 	case match(s, "minutes"):
-		return Duration(n) * Minute, r, nil
+		return Duration(n * float64(Minute)), r, nil
 	case match(s, "seconds"):
-		return Duration(n) * Second, r, nil
+		return Duration(n * float64(Second)), r, nil
 	case match(s, "milliseconds"), s == "ms":
-		return Duration(n) * Millisecond, r, nil
+		return Duration(n * float64(Millisecond)), r, nil
 	case match(s, "microseconds"), s == "us", s == "µs":
-		return Duration(n) * Microsecond, r, nil
+		return Duration(n * float64(Microsecond)), r, nil
 	case match(s, "nanoseconds"), s == "ns":
-		return Duration(n) * Nanosecond, r, nil
+		return Duration(n * float64(Nanosecond)), r, nil
 	case match(s, "months"):
-		return Duration(now.AddDate(0, n, 0).Sub(now)), r, nil
+		month, day := math.Modf(n)
+		month, day = -month, -math.Round(28*day) // 1 month is approximately 4 weeks
+		return Duration(now.Sub(now.AddDate(0, int(month), int(day)))), r, nil
 	case match(s, "years"):
-		return Duration(now.AddDate(n, 0, 0).Sub(now)), r, nil
+		year, month := math.Modf(n)
+		year, month = -year, -math.Round(12*month)
+		return Duration(now.Sub(now.AddDate(int(year), int(month), 0))), r, nil
 	default:
 		return 0, "", fmt.Errorf("unkonwn time unit %q", s)
 	}
