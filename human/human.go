@@ -68,10 +68,8 @@ func parseNextNumber(s string) (string, string) {
 
 	// exponent part
 	if hasPrefixFunc(s[i:], isExp) {
-		i++ // e or E
-		if hasPrefixFunc(s[i:], isSign) {
-			i++ // - or +
-		}
+		i++                                 // e or E
+		i += countPrefixFunc(s[i:], isSign) // - or +
 		i += countPrefixFunc(s[i:], unicode.IsDigit)
 	}
 
