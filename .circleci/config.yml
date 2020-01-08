@@ -7,4 +7,4 @@ jobs:
       - checkout
       - run: go get -v -t
       - run: go vet
-      - run: go test -v -race
+      - run: go test -v -race -cover . ./human
