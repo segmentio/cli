@@ -2,6 +2,7 @@ package human
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	yaml "gopkg.in/yaml.v3"
@@ -31,14 +32,19 @@ func TestCountParse(t *testing.T) {
 func TestCountFormat(t *testing.T) {
 	for _, test := range []struct {
 		in  Count
+		fmt string
 		out string
 	}{
-		{in: 0, out: "0"},
-		{in: 1234, out: "1234"},
-		{in: 10234, out: "10.2K"},
+		{in: 0, fmt: "%v", out: "0"},
+		{in: 1234, fmt: "%v", out: "1234"},
+		{in: 10234, fmt: "%v", out: "10.2K"},
+		{in: 123456789, fmt: "%d", out: "123456789"},
+		{in: 1234.56789, fmt: "%f", out: "1234.56789"},
+		{in: 123456789, fmt: "%s", out: "123M"},
+		{in: 123456789, fmt: "%#v", out: "human.Count(1.23456789e+08)"},
 	} {
 		t.Run(test.out, func(t *testing.T) {
-			if s := test.in.String(); s != test.out {
+			if s := fmt.Sprintf(test.fmt, test.in); s != test.out {
 				t.Error("formatted count mismatch:", s, "!=", test.out)
 			}
 		})

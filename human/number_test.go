@@ -2,6 +2,7 @@ package human
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	yaml "gopkg.in/yaml.v3"
@@ -32,16 +33,20 @@ func TestNumberParse(t *testing.T) {
 func TestNumberFormat(t *testing.T) {
 	for _, test := range []struct {
 		in  Number
+		fmt string
 		out string
 	}{
-		{in: 0, out: "0"},
-		{in: 1234, out: "1,234"},
-		{in: 1234.567, out: "1,234.567"},
-		{in: 123456.789, out: "123,456.789"},
-		{in: 1234567.89, out: "1,234,567.89"},
+		{in: 0, fmt: "%v", out: "0"},
+		{in: 1234, fmt: "%v", out: "1,234"},
+		{in: 1234.567, fmt: "%v", out: "1,234.567"},
+		{in: 123456.789, fmt: "%v", out: "123,456.789"},
+		{in: 1234567.89, fmt: "%v", out: "1,234,567.89"},
+		{in: 1234567.89, fmt: "%f", out: "1234567.89"},
+		{in: 1234567.89, fmt: "%s", out: "1,234,567.89"},
+		{in: 1234567.89, fmt: "%#v", out: "human.Number(1.23456789e+06)"},
 	} {
 		t.Run(test.out, func(t *testing.T) {
-			if s := test.in.String(); s != test.out {
+			if s := fmt.Sprintf(test.fmt, test.in); s != test.out {
 				t.Error("formatted number mismatch:", s, "!=", test.out)
 			}
 		})

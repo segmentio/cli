@@ -2,6 +2,7 @@ package human
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	yaml "gopkg.in/yaml.v3"
@@ -49,31 +50,37 @@ func TestBytesParse(t *testing.T) {
 func TestBytesFormat(t *testing.T) {
 	for _, test := range []struct {
 		in  Bytes
+		fmt string
 		out string
 	}{
-		{out: "0", in: 0},
-		{out: "2", in: 2},
+		{fmt: "%v", out: "0", in: 0},
+		{fmt: "%v", out: "2", in: 2},
 
-		{out: "1.95Ki", in: 2 * KB},
-		{out: "1.91Mi", in: 2 * MB},
-		{out: "1.86Gi", in: 2 * GB},
-		{out: "1.82Ti", in: 2 * TB},
-		{out: "1.78Pi", in: 2 * PB},
+		{fmt: "%v", out: "1.95Ki", in: 2 * KB},
+		{fmt: "%v", out: "1.91Mi", in: 2 * MB},
+		{fmt: "%v", out: "1.86Gi", in: 2 * GB},
+		{fmt: "%v", out: "1.82Ti", in: 2 * TB},
+		{fmt: "%v", out: "1.78Pi", in: 2 * PB},
 
-		{out: "2Ki", in: 2 * KiB},
-		{out: "2Mi", in: 2 * MiB},
-		{out: "2Gi", in: 2 * GiB},
-		{out: "2Ti", in: 2 * TiB},
-		{out: "2Pi", in: 2 * PiB},
+		{fmt: "%v", out: "2Ki", in: 2 * KiB},
+		{fmt: "%v", out: "2Mi", in: 2 * MiB},
+		{fmt: "%v", out: "2Gi", in: 2 * GiB},
+		{fmt: "%v", out: "2Ti", in: 2 * TiB},
+		{fmt: "%v", out: "2Pi", in: 2 * PiB},
 
-		{out: "1.21Ki", in: 1234},
-		{out: "1.18Mi", in: 1234 * KB},
+		{fmt: "%v", out: "1.21Ki", in: 1234},
+		{fmt: "%v", out: "1.18Mi", in: 1234 * KB},
 
-		{out: "1.5Ki", in: 1*KiB + 512},
-		{out: "1.5Mi", in: 1*MiB + 512*KiB},
+		{fmt: "%v", out: "1.5Ki", in: 1*KiB + 512},
+		{fmt: "%v", out: "1.5Mi", in: 1*MiB + 512*KiB},
+
+		{fmt: "%d", out: "123456789", in: 123456789},
+		{fmt: "%b", out: "123MB", in: 123456789},
+		{fmt: "%s", out: "118Mi", in: 123456789},
+		{fmt: "%#v", out: "human.Bytes(123456789)", in: 123456789},
 	} {
 		t.Run(test.out, func(t *testing.T) {
-			if s := test.in.String(); s != test.out {
+			if s := fmt.Sprintf(test.fmt, test.in); s != test.out {
 				t.Error("formatted bytes mismatch:", s, "!=", test.out)
 			}
 		})

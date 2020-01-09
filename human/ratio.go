@@ -4,6 +4,7 @@ import (
 	"encoding"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 
@@ -40,6 +41,44 @@ func (r Ratio) String() string {
 	return r.Text(2)
 }
 
+func (r Ratio) GoString() string {
+	return fmt.Sprintf("human.Ratio(%v)", float64(r))
+}
+
+// Format satisfies the fmt.Formatter interface.
+//
+// The method supports the following formatting verbs:
+//
+//	e	base 10, unit-less, scientific notation
+//	f	base 10, unit-less, decimal notation
+//	g	base 10, unit-less, act like 'e' or 'f' depending on scale
+//	s	base 10, with units (same as calling String)
+//	v	same as the 's' format, unless '#' is set to print the go value
+//
+func (r Ratio) Format(w fmt.State, v rune) {
+	r.formatWith(w, v, 2)
+}
+
+func (r Ratio) formatWith(w fmt.State, v rune, p int) {
+	io.WriteString(w, r.format(w, v, p))
+}
+
+func (r Ratio) format(w fmt.State, v rune, p int) string {
+	switch v {
+	case 'e', 'f', 'g':
+		return strconv.FormatFloat(float64(r), byte(v), -1, 64)
+	case 's':
+		return r.Text(p)
+	case 'v':
+		if w.Flag('#') {
+			return r.GoString()
+		}
+		return r.format(w, 's', p)
+	default:
+		return printError(v, r, float64(r))
+	}
+}
+
 func (r Ratio) Text(precision int) string {
 	s := strconv.FormatFloat(100*float64(r), 'f', precision, 64)
 	if strings.Contains(s, ".") {
@@ -47,6 +86,10 @@ func (r Ratio) Text(precision int) string {
 		s = suffix('.').trim(s)
 	}
 	return s + "%"
+}
+
+func (r Ratio) Formatter(precision int) fmt.Formatter {
+	return formatter(func(w fmt.State, v rune) { r.formatWith(w, v, precision) })
 }
 
 func (r Ratio) MarshalJSON() ([]byte, error) {
@@ -88,7 +131,9 @@ func (r *Ratio) UnmarshalText(b []byte) error {
 }
 
 var (
-	_ fmt.Stringer = Ratio(0)
+	_ fmt.Formatter  = Ratio(0)
+	_ fmt.GoStringer = Ratio(0)
+	_ fmt.Stringer   = Ratio(0)
 
 	_ json.Marshaler   = Ratio(0)
 	_ json.Unmarshaler = (*Ratio)(nil)

@@ -4,6 +4,8 @@ import (
 	"encoding"
 	"encoding/json"
 	"fmt"
+	"io"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -79,6 +81,44 @@ func (r Rate) String() string {
 	return r.Text(Second)
 }
 
+func (r Rate) GoString() string {
+	return fmt.Sprintf("human.Rate(%v)", float64(r))
+}
+
+// Format satisfies the fmt.Formatter interface.
+//
+// The method supports the following formatting verbs:
+//
+//	e	base 10, unit-less, scientific notation
+//	f	base 10, unit-less, decimal notation
+//	g	base 10, unit-less, act like 'e' or 'f' depending on scale
+//	s	base 10, with units (same as calling String)
+//	v	same as the 's' format, unless '#' is set to print the go value
+//
+func (r Rate) Format(w fmt.State, v rune) {
+	r.formatPer(w, v, Second)
+}
+
+func (r Rate) formatPer(w fmt.State, v rune, d Duration) {
+	io.WriteString(w, r.format(w, v, d))
+}
+
+func (r Rate) format(w fmt.State, v rune, d Duration) string {
+	switch v {
+	case 'e', 'f', 'g':
+		return strconv.FormatFloat(float64(r), byte(v), -1, 64)
+	case 's':
+		return r.Text(d)
+	case 'v':
+		if w.Flag('#') {
+			return r.GoString()
+		}
+		return r.format(w, 's', d)
+	default:
+		return printError(v, r, float64(r))
+	}
+}
+
 func (r Rate) Text(d Duration) string {
 	var unit string
 
@@ -103,6 +143,10 @@ func (r Rate) Text(d Duration) string {
 
 	r /= Rate(d) * PerSecond
 	return Count(r).String() + unit
+}
+
+func (r Rate) Formatter(d Duration) fmt.Formatter {
+	return formatter(func(w fmt.State, v rune) { r.formatPer(w, v, d) })
 }
 
 func (r Rate) MarshalJSON() ([]byte, error) {
@@ -144,7 +188,9 @@ func (r *Rate) UnmarshalText(b []byte) error {
 }
 
 var (
-	_ fmt.Stringer = Rate(0)
+	_ fmt.Formatter  = Rate(0)
+	_ fmt.GoStringer = Rate(0)
+	_ fmt.Stringer   = Rate(0)
 
 	_ json.Marshaler   = Rate(0)
 	_ json.Unmarshaler = (*Rate)(nil)
