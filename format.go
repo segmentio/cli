@@ -44,6 +44,14 @@ type PrintFlusher interface {
 //	p.Print(v2)
 //	p.Print(v3)
 //
+//
+// The package supports three formats: text, json, and yaml. All formats
+// einterpret the `json` struct tag to configure the names of the fields
+// and the behavior of the formatting operation.
+//
+// The text format also interprets `fmt` tags as carrying the formatting
+// string passed in calls to functions of the `fmt` package.
+//
 // If the format name is not supported, the function returns a usage error.
 func Format(format string, output io.Writer) (PrintFlusher, error) {
 	switch format {
@@ -134,11 +142,11 @@ func (p *textFormat) printStruct(v reflect.Value) {
 	}
 
 	i := 0
-	p.forEachStructFieldValue(v, func(value interface{}) {
+	p.forEachStructFieldValue(v, func(format string, value interface{}) {
 		if i != 0 {
 			io.WriteString(&p.tw, "\t")
 		}
-		io.WriteString(&p.tw, p.format(value))
+		io.WriteString(&p.tw, p.format(format, value))
 		i++
 	})
 
@@ -161,7 +169,7 @@ func (p *textFormat) printMap(v reflect.Value) {
 			if i != 0 {
 				io.WriteString(&p.tw, "\t")
 			}
-			io.WriteString(&p.tw, normalizeColumnName(p.format(k.Interface())))
+			io.WriteString(&p.tw, normalizeColumnName(p.format("%v", k.Interface())))
 		}
 
 		io.WriteString(&p.tw, "\n")
@@ -171,7 +179,7 @@ func (p *textFormat) printMap(v reflect.Value) {
 		if i != 0 {
 			io.WriteString(&p.tw, "\t")
 		}
-		io.WriteString(&p.tw, p.format(v.MapIndex(k).Interface()))
+		io.WriteString(&p.tw, p.format("%v", v.MapIndex(k).Interface()))
 	}
 
 	io.WriteString(&p.tw, "\n")
@@ -192,27 +200,32 @@ func (p *textFormat) Flush() {
 
 func (p *textFormat) print(v interface{}) {
 	p.Flush() // in case there is buffered content
-	io.WriteString(p.w, p.format(v))
-	io.WriteString(p.w, "\n")
+	io.WriteString(p.w, p.format("%v\n", v))
 }
 
-func (p *textFormat) format(v interface{}) string {
-	if m, ok := v.(encoding.TextMarshaler); ok {
+func (p *textFormat) format(f string, v interface{}) string {
+	switch m := v.(type) {
+	case fmt.Formatter, fmt.Stringer, error:
+		// Takes priority over encoding.TextMarshaler, handled by the call to
+		// fmt.Sprintf below.
+	case encoding.TextMarshaler:
 		b, _ := m.MarshalText()
 		return string(b)
 	}
-	return fmt.Sprint(v)
+	return fmt.Sprintf(f, v)
 }
 
 func (p *textFormat) forEachStructFieldName(v reflect.Value, do func(string)) {
-	p.forEachStructField(v, func(name string, _ reflect.Value) { do(name) })
+	p.forEachStructField(v, func(name, _ string, _ reflect.Value) { do(name) })
 }
 
-func (p *textFormat) forEachStructFieldValue(v reflect.Value, do func(interface{})) {
-	p.forEachStructField(v, func(_ string, value reflect.Value) { do(value.Interface()) })
+func (p *textFormat) forEachStructFieldValue(v reflect.Value, do func(string, interface{})) {
+	p.forEachStructField(v, func(_, format string, value reflect.Value) {
+		do(format, value.Interface())
+	})
 }
 
-func (p *textFormat) forEachStructField(v reflect.Value, do func(string, reflect.Value)) {
+func (p *textFormat) forEachStructField(v reflect.Value, do func(string, string, reflect.Value)) {
 	t := v.Type()
 	n := t.NumField()
 
@@ -230,16 +243,19 @@ func (p *textFormat) forEachStructField(v reflect.Value, do func(string, reflect
 
 		name := f.Tag.Get("json")
 		name = strings.Split(name, ",")[0]
-
 		if name == "-" {
 			continue
 		}
-
 		if name == "" {
 			name = f.Name
 		}
 
-		do(normalizeColumnName(name), v.Field(i))
+		format := f.Tag.Get("fmt")
+		if format == "" {
+			format = "%v"
+		}
+
+		do(normalizeColumnName(name), format, v.Field(i))
 	}
 }
 
@@ -260,6 +276,13 @@ func normalizeColumnName(name string) string {
 //	p.Print(v1)
 //	p.Print(v2)
 //	p.Print(v3)
+//
+// The package supports three formats: text, json, and yaml. All formats
+// einterpret the `json` struct tag to configure the names of the fields
+// and the behavior of the formatting operation.
+//
+// The text format also interprets `fmt` tags as carrying the formatting
+// string passed in calls to functions of the `fmt` package.
 //
 // If the format name is not supported, the function returns a usage error.
 func FormatList(format string, output io.Writer) (PrintFlusher, error) {

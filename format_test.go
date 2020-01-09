@@ -83,8 +83,8 @@ func ExampleFormat_text_struct() {
 
 		type output struct {
 			ID    string
-			Name  string
-			Value int
+			Name  string `fmt:"%q"`
+			Value int    `fmt:"% 5d"`
 		}
 
 		p.Print(output{"1234", "A", 1})
@@ -96,9 +96,9 @@ func ExampleFormat_text_struct() {
 	cli.Call(cmd)
 	// Output:
 	// ID    NAME  VALUE
-	// 1234  A     1
-	// 5678  B     2
-	// 9012  C     3
+	// 1234  "A"       1
+	// 5678  "B"       2
+	// 9012  "C"       3
 }
 
 func ExampleFormat_text_map() {
