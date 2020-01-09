@@ -44,7 +44,6 @@ type PrintFlusher interface {
 //	p.Print(v2)
 //	p.Print(v3)
 //
-//
 // The package supports three formats: text, json, and yaml. All formats
 // einterpret the `json` struct tag to configure the names of the fields
 // and the behavior of the formatting operation.
