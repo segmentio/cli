@@ -241,17 +241,17 @@ func (p *textFormat) forEachStructField(v reflect.Value, do func(string, string,
 			continue
 		}
 
-		name := f.Tag.Get("json")
+		name, hasName := f.Tag.Lookup("json")
 		name = strings.Split(name, ",")[0]
 		if name == "-" {
 			continue
 		}
-		if name == "" {
+		if !hasName {
 			name = f.Name
 		}
 
-		format := f.Tag.Get("fmt")
-		if format == "" {
+		format, hasFormat := f.Tag.Lookup("fmt")
+		if !hasFormat {
 			format = "%v"
 		}
 
