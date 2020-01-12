@@ -193,15 +193,17 @@ func (d Duration) format(w fmt.State, v rune, now time.Time) string {
 		var limit int
 		var units durationUnits
 
-		limit, ok := w.Precision()
-		if !ok {
-			limit = d.defaultLimit()
-		}
-
+		limit, hasLimit := w.Precision()
 		if w.Flag('+') {
 			units = durationsLong
+			if !hasLimit {
+				limit = 1
+			}
 		} else {
 			units = durationsShort
+			if !hasLimit {
+				limit = d.defaultLimit()
+			}
 		}
 
 		return d.text(now, limit, units)
