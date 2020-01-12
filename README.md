@@ -343,5 +343,8 @@ In the text format, struct and map values are printed as table representations
 with a header being the name of the struct fields or the keys of the map.
 Other value types are simply printed one value per line.
 
-All formats support the `json` struct tag to configure the names of the fields
+All formats interpret the `json` struct tag to configure the names of the fields
 and the behavior of the formatting operation.
+
+The text format also interprets `fmt` tags as carrying the formatting string
+passed in calls to functions of the `fmt` package.
