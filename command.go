@@ -226,7 +226,7 @@ func (cmd *CommandFunc) Call(ctx context.Context, args, env []string) (int, erro
 	if cmd.context {
 		params = append(params, reflect.ValueOf(ctx))
 		x++
-	} else if ctx != context.TODO() {
+	} else if ctx != nil && ctx != context.TODO() {
 		panic("to use context, all commands must accept a context.Context as their first argument")
 	}
 
