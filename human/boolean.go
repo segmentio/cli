@@ -42,7 +42,7 @@ func (b Boolean) GoString() string {
 //
 //	s	"yes" or "no"
 //	t	"true" or "false"
-//	v	same as 't'
+//	v	same as 's'
 //
 // For each of these options, these extra flags are also intepreted:
 //
@@ -55,7 +55,7 @@ func (b Boolean) Format(w fmt.State, v rune) {
 
 func (b Boolean) format(w fmt.State, v rune) string {
 	switch v {
-	case 's':
+	case 's', 'v':
 		switch {
 		case w.Flag('#'):
 			return b.string("YES", "NO")
@@ -64,7 +64,7 @@ func (b Boolean) format(w fmt.State, v rune) string {
 		default:
 			return b.string("yes", "no")
 		}
-	case 't', 'v':
+	case 't':
 		switch {
 		case w.Flag('#'):
 			return b.string("TRUE", "FALSE")
