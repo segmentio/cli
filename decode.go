@@ -187,6 +187,8 @@ func makeValueDecoder(t reflect.Type) decodeFunc {
 	switch {
 	case isTextUnmarshaler(t):
 		return decodeTextUnmarshaler
+	case isBinaryUnmarshaler(t):
+		return decodeBinaryUnmarshaler
 	}
 	switch t.Kind() {
 	case reflect.Bool:
@@ -226,6 +228,9 @@ func makeValueDecoder(t reflect.Type) decodeFunc {
 func makeSliceDecoder(t reflect.Type) decodeFunc {
 	if isTextUnmarshaler(t) {
 		return decodeTextUnmarshaler
+	}
+	if isBinaryUnmarshaler(t) {
+		return decodeBinaryUnmarshaler
 	}
 	e := t.Elem()
 	f := makeValueDecoder(e)
@@ -412,6 +417,15 @@ func decodeTextUnmarshaler(v reflect.Value, a []string) error {
 	return u.UnmarshalText(b)
 }
 
+func decodeBinaryUnmarshaler(v reflect.Value, a []string) error {
+	if err := assertArgumentCount(a, 1); err != nil {
+		return err
+	}
+	b := []byte(a[0])
+	u := v.Addr().Interface().(encoding.BinaryUnmarshaler)
+	return u.UnmarshalBinary(b)
+}
+
 type structField struct {
 	typ     reflect.Type
 	index   []int
@@ -425,12 +439,13 @@ func (f structField) isBoolean() bool { return f.typ.Kind() == reflect.Bool }
 func (f structField) isSlice() bool   { return f.typ.Kind() == reflect.Slice }
 
 var (
-	intType             = reflect.TypeOf(0)
-	durationType        = reflect.TypeOf(time.Duration(0))
-	timeType            = reflect.TypeOf(time.Time{})
-	emptyType           = reflect.TypeOf(struct{}{})
-	errorType           = reflect.TypeOf((*error)(nil)).Elem()
-	textUnmarshalerType = reflect.TypeOf((*encoding.TextUnmarshaler)(nil)).Elem()
+	intType               = reflect.TypeOf(0)
+	durationType          = reflect.TypeOf(time.Duration(0))
+	timeType              = reflect.TypeOf(time.Time{})
+	emptyType             = reflect.TypeOf(struct{}{})
+	errorType             = reflect.TypeOf((*error)(nil)).Elem()
+	textUnmarshalerType   = reflect.TypeOf((*encoding.TextUnmarshaler)(nil)).Elem()
+	binaryUnmarshalerType = reflect.TypeOf((*encoding.BinaryUnmarshaler)(nil)).Elem()
 )
 
 func isSupportedFieldType(t reflect.Type) bool {
@@ -439,7 +454,7 @@ func isSupportedFieldType(t reflect.Type) bool {
 		return true
 	}
 	switch {
-	case isTextUnmarshaler(t):
+	case isTextUnmarshaler(t), isBinaryUnmarshaler(t):
 		return true
 	}
 	switch t.Kind() {
@@ -467,6 +482,10 @@ func isSupportedFieldType(t reflect.Type) bool {
 
 func isTextUnmarshaler(t reflect.Type) bool {
 	return reflect.PtrTo(t).Implements(textUnmarshalerType)
+}
+
+func isBinaryUnmarshaler(t reflect.Type) bool {
+	return reflect.PtrTo(t).Implements(binaryUnmarshalerType)
 }
 
 func typeNameOf(t reflect.Type) string {

@@ -3,6 +3,7 @@ package cli_test
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"time"
 
@@ -225,6 +226,24 @@ func ExampleCommand_textUnmarshaler() {
 	// Output:
 	//
 	// hello world
+}
+
+func ExampleCommand_binaryUnmarshaler() {
+	type config struct {
+		URL url.URL `flag:"--url" default:"http://localhost/"`
+	}
+
+	cmd := cli.Command(func(config config) {
+		fmt.Println(config.URL.String())
+	})
+
+	cli.Call(cmd)
+	cli.Call(cmd, "--url", "http://www.segment.com/")
+
+	// Output:
+	//
+	// http://localhost/
+	// http://www.segment.com/
 }
 
 func ExampleCommand_default() {

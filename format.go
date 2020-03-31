@@ -106,7 +106,7 @@ func newTextFormat(w io.Writer) *textFormat {
 
 func (p *textFormat) Print(x interface{}) {
 	switch x.(type) {
-	case encoding.TextMarshaler, fmt.Formatter, fmt.Stringer, error:
+	case encoding.TextMarshaler, encoding.BinaryMarshaler, fmt.Formatter, fmt.Stringer, error:
 		p.print(x)
 		return
 	}
@@ -209,6 +209,9 @@ func (p *textFormat) format(f string, v interface{}) string {
 		// fmt.Sprintf below.
 	case encoding.TextMarshaler:
 		b, _ := m.MarshalText()
+		return string(b)
+	case encoding.BinaryMarshaler:
+		b, _ := m.MarshalBinary()
 		return string(b)
 	}
 	return fmt.Sprintf(f, v)
