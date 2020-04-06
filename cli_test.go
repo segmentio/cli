@@ -388,6 +388,37 @@ func ExampleCommandSet() {
 	// that
 }
 
+func ExampleCommandSet_default() {
+	help := cli.Command(func() {
+		fmt.Println("help")
+	})
+
+	this := cli.Command(func() {
+		fmt.Println("this")
+	})
+
+	that := cli.Command(func() {
+		fmt.Println("that")
+	})
+
+	cmd := cli.CommandSet{
+		"help": help,
+		"do": cli.CommandSet{
+			"":     this,
+			"that": that,
+		},
+	}
+
+	cli.Call(cmd, "help")
+	cli.Call(cmd, "do")
+	cli.Call(cmd, "do", "that")
+
+	// Output:
+	// help
+	// this
+	// that
+}
+
 func ExampleCommand_help() {
 	type config struct {
 		Path  string `flag:"--path"     help:"Path to some file" default:"file" env:"-"`
