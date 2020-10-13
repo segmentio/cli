@@ -2,6 +2,7 @@ package human
 
 import (
 	"bytes"
+	"os"
 	"os/user"
 	"path/filepath"
 )
@@ -15,11 +16,15 @@ type Path string
 func (p *Path) UnmarshalText(b []byte) error {
 	switch {
 	case bytes.HasPrefix(b, []byte{'~', filepath.Separator}):
-		u, err := user.Current()
-		if err != nil {
-			return err
+		home, ok := os.LookupEnv("HOME")
+		if !ok {
+			u, err := user.Current()
+			if err != nil {
+				return err
+			}
+			home = u.HomeDir
 		}
-		*p = Path(filepath.Join(u.HomeDir, string(b[2:])))
+		*p = Path(filepath.Join(home, string(b[2:])))
 	default:
 		*p = Path(b)
 	}

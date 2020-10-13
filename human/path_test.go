@@ -1,15 +1,13 @@
 package human
 
 import (
-	"os/user"
+	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestPath(t *testing.T) {
 	separator := string([]byte{filepath.Separator})
-	user, _ := user.Current()
-	home := user.HomeDir
 
 	tests := []struct {
 		in  string
@@ -18,7 +16,7 @@ func TestPath(t *testing.T) {
 		{in: ".", out: "."},
 		{in: separator, out: Path(separator)},
 		{in: filepath.Join(".", "hello", "world"), out: Path(filepath.Join(".", "hello", "world"))},
-		{in: filepath.Join("~", "hello", "world"), out: Path(filepath.Join(home, "hello", "world"))},
+		{in: filepath.Join("~", "hello", "world"), out: Path(filepath.Join(os.Getenv("HOME"), "hello", "world"))},
 	}
 
 	for _, test := range tests {
