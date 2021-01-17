@@ -512,18 +512,33 @@ func (cmds CommandSet) Call(ctx context.Context, args, env []string) (int, error
 		return 0, &Help{Cmd: cmds}
 	}
 
-	if len(args) == 0 {
+	var a string
+	var c Function
+
+	for i, arg := range args {
+		if isCommandSeparator(arg) {
+			break
+		}
+		if isOption(arg) {
+			continue
+		}
+		a = arg
+		tmp := make([]string, 0, len(args)-1)
+		tmp = append(tmp, args[:i]...)
+		tmp = append(tmp, args[i+1:]...)
+		args = tmp
+		break
+	}
+
+	if a == "" {
 		return 1, &Usage{Cmd: cmds, Err: fmt.Errorf("missing command")}
 	}
 
-	a := args[0]
-	c := cmds[a]
-
-	if c == nil {
+	if c = cmds[a]; c == nil {
 		return 1, &Usage{Cmd: cmds, Err: fmt.Errorf("unknown command: %q", a)}
 	}
 
-	return NamedCommand(a, c).Call(ctx, args[1:], env)
+	return NamedCommand(a, c).Call(ctx, args, env)
 }
 
 // Format writes a human-redable representation of cmds to w, using v as the
