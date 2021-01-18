@@ -407,6 +407,44 @@ func ExampleCommandSet() {
 	// that
 }
 
+func ExampleCommandSet_option_before_command() {
+	type config struct {
+		String string `flag:"-f,--flag" default:"-"`
+	}
+
+	sub := cli.Command(func(config config) {
+		fmt.Println(config.String)
+	})
+
+	cmd := cli.CommandSet{
+		"sub": sub,
+	}
+
+	cli.Call(cmd, "-f=hello", "sub")
+
+	// Output:
+	// hello
+}
+
+func ExampleCommandSet_option_after_command() {
+	type config struct {
+		String string `flag:"-f,--flag" default:"-"`
+	}
+
+	sub := cli.Command(func(config config) {
+		fmt.Println(config.String)
+	})
+
+	cmd := cli.CommandSet{
+		"sub": sub,
+	}
+
+	cli.Call(cmd, "sub", "-f=hello")
+
+	// Output:
+	// hello
+}
+
 func ExampleCommand_help() {
 	type config struct {
 		Path  string `flag:"--path"     help:"Path to some file" default:"file" env:"-"`
