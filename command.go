@@ -263,18 +263,17 @@ func (cmd *CommandFunc) Call(ctx context.Context, args, env []string) (int, erro
 				break
 			}
 
+			var value []string
 			if len(values) == 0 {
-				return 1, &Usage{
-					Cmd: cmd,
-					Err: fmt.Errorf("expected %d positional arguments but only %d were given", len(cmd.values), i-x),
-				}
+				value = []string{""}
+			} else {
+				value, values = values[:1], values[1:]
 			}
 
-			if err := cmd.values[i-x](v, values[:1]); err != nil {
+			if err := cmd.values[i-x](v, value); err != nil {
 				return 1, err
 			}
 			params = append(params, v)
-			values = values[1:]
 		}
 	}
 
