@@ -101,6 +101,10 @@ type CommandFunc struct {
 	// See Command for details about the accepted signatures.
 	Func interface{}
 
+	// An optional usage string for this function. If set, then this replaces the
+	// the default one that shows the types (but not names) of arguments.
+	Usage string
+
 	function reflect.Value
 	parser   parser
 	options  structDecoder
@@ -337,6 +341,11 @@ func (cmd *CommandFunc) Call(ctx context.Context, args, env []string) (int, erro
 func (cmd *CommandFunc) Format(w fmt.State, v rune) {
 	switch v {
 	case 's': // usage
+		if cmd.Usage != "" {
+			io.WriteString(w, cmd.Usage)
+			return
+		}
+
 		io.WriteString(w, "[options]")
 
 		t := cmd.function.Type()
@@ -347,7 +356,7 @@ func (cmd *CommandFunc) Format(w fmt.State, v rune) {
 
 		for i := 1; i < n; i++ {
 			p := t.In(i)
-			fmt.Fprintf(w, " [%s xxx]", p.Name())
+			fmt.Fprintf(w, " [%s]", typeNameOf(p))
 
 			if p.Kind() == reflect.Slice {
 				break
