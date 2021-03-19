@@ -347,7 +347,7 @@ func (cmd *CommandFunc) Format(w fmt.State, v rune) {
 
 		for i := 1; i < n; i++ {
 			p := t.In(i)
-			fmt.Fprintf(w, " [%s]", typeNameOf(p))
+			fmt.Fprintf(w, " [%s]", p.Name())
 
 			if p.Kind() == reflect.Slice {
 				break
