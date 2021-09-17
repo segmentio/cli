@@ -345,13 +345,20 @@ func (cmd *CommandFunc) Format(w fmt.State, v rune) {
 			n--
 		}
 
-		for i := 1; i < n; i++ {
+		i := 1
+		if cmd.context {
+			i = 2
+		}
+
+		for i < n {
 			p := t.In(i)
 			fmt.Fprintf(w, " [%s]", typeNameOf(p))
 
 			if p.Kind() == reflect.Slice {
 				break
 			}
+
+			i++
 		}
 
 		if cmd.variadic {

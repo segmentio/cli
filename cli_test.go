@@ -470,6 +470,31 @@ func ExampleCommand_help() {
 	//       --path string  Path to some file (default: file)
 }
 
+func ExampleCommand_helpContext() {
+	type config struct {
+		Path  string `flag:"--path"     help:"Path to some file" default:"file" env:"-"`
+		Debug bool   `flag:"-d,--debug" help:"Enable debug mode"`
+	}
+
+	cmd := cli.CommandSet{
+		"do": cli.Command(func(ctx context.Context, config config) {
+			// ...
+		}),
+	}
+
+	cli.Err = os.Stdout
+	cli.CallContext(context.Background(), cmd, "do", "-h")
+
+	// Output:
+	// Usage:
+	//   do [options]
+	//
+	// Options:
+	//   -d, --debug        Enable debug mode
+	//   -h, --help         Show this help message
+	//       --path string  Path to some file (default: file)
+}
+
 func ExampleCommand_usage() {
 	type config struct {
 		Count int  `flag:"-n"         help:"Number of things"  default:"1"`
