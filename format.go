@@ -73,7 +73,9 @@ func newJsonFormat(w io.Writer) jsonFormat {
 	return jsonFormat{e}
 }
 
-func (p jsonFormat) Print(v interface{}) { p.Encode(v) }
+func (p jsonFormat) Print(v interface{}) {
+	p.Encode(normalizeValue(v))
+}
 
 func (p jsonFormat) Flush() {}
 
@@ -84,7 +86,7 @@ func newYamlFormat(w io.Writer) yamlFormat {
 }
 
 func (p yamlFormat) Print(v interface{}) {
-	b, _ := json.Marshal(v)
+	b, _ := json.Marshal(normalizeValue(v))
 
 	var x interface{}
 	yaml.Unmarshal(b, &x)
@@ -310,7 +312,7 @@ func newJsonFormatList(w io.Writer) *jsonFormatList {
 }
 
 func (p *jsonFormatList) Print(v interface{}) {
-	b, _ := json.Marshal(v)
+	b, _ := json.Marshal(normalizeValue(v))
 	p.values = append(p.values, json.RawMessage(b))
 }
 
@@ -338,7 +340,7 @@ func newYamlFormatList(w io.Writer) *yamlFormatList {
 
 func (p *yamlFormatList) Print(v interface{}) {
 	var value interface{}
-	p.enc.Encode(v)
+	p.enc.Encode(normalizeValue(v))
 	p.dec.Decode(&value)
 	p.values = append(p.values, value)
 }
@@ -349,4 +351,17 @@ func (p *yamlFormatList) Flush() {
 	e.Encode(p.values)
 	e.Close()
 	p.values = nil
+}
+
+func normalizeValue(v interface{}) interface{} {
+	switch x := reflect.ValueOf(v); x.Kind() {
+	case reflect.Slice:
+		if x.IsNil() {
+			// json.Marshal will produce `null` for slices that
+			// are nil, so we make a new empty slice to always
+			// output an empty array instead.
+			return reflect.MakeSlice(x.Type(), 0, 0).Interface()
+		}
+	}
+	return v
 }
