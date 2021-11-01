@@ -1,4 +1,4 @@
-# cli [![CircleCI](https://circleci.com/gh/segmentio/cli.svg?style=shield)](https://circleci.com/gh/segmentio/cli) [![Go Report Card](https://goreportcard.com/badge/github.com/segmentio/cli)](https://goreportcard.com/report/github.com/segmentio/cli) [![GoDoc](https://godoc.org/github.com/segmentio/cli?status.svg)](https://godoc.org/github.com/segmentio/cli)
+# cli ![build status](https://github.com/segmentio/cli/actions/workflows/go.yml/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/segmentio/cli)](https://goreportcard.com/report/github.com/segmentio/cli) [![GoDoc](https://godoc.org/github.com/segmentio/cli?status.svg)](https://godoc.org/github.com/segmentio/cli)
 
 Go package providing high-level constructs for command-line tools.
 
