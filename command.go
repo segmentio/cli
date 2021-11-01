@@ -204,6 +204,8 @@ func (cmd *CommandFunc) Call(ctx context.Context, args, env []string) (int, erro
 	}
 
 	for name, field := range cmd.options {
+		fmt.Println(name, field)
+
 		if cmd.IgnoreEnvOptions != nil {
 			if _, ok := cmd.IgnoreEnvOptions[name]; ok {
 				continue
