@@ -105,6 +105,9 @@ type CommandFunc struct {
 	// the default one that shows the types (but not names) of arguments.
 	Usage string
 
+	// Whether to ignore the environment when setting up config
+	IgnoreEnv bool
+
 	function reflect.Value
 	parser   parser
 	options  structDecoder
@@ -200,12 +203,14 @@ func (cmd *CommandFunc) Call(ctx context.Context, args, env []string) (int, erro
 		return 0, &Help{Cmd: cmd}
 	}
 
-	for name, field := range cmd.options {
-		if _, ok := options[name]; !ok && len(field.envvars) != 0 {
-			for _, e := range field.envvars {
-				if v, ok := lookupEnv(e, env); ok {
-					options[name] = []string{v}
-					break
+	if !cmd.IgnoreEnv {
+		for name, field := range cmd.options {
+			if _, ok := options[name]; !ok && len(field.envvars) != 0 {
+				for _, e := range field.envvars {
+					if v, ok := lookupEnv(e, env); ok {
+						options[name] = []string{v}
+						break
+					}
 				}
 			}
 		}
