@@ -148,6 +148,7 @@ func forEachStructField(t reflect.Type, index []int, do func(structField)) {
 		case "-":
 			envvars = nil
 		default:
+			fmt.Println("Env", env)
 			envvars = append(envvars, env)
 		}
 

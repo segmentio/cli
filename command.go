@@ -200,6 +200,7 @@ func (cmd *CommandFunc) Call(ctx context.Context, args, env []string) (int, erro
 		if _, ok := options[name]; !ok && len(field.envvars) != 0 {
 			for _, e := range field.envvars {
 				if v, ok := lookupEnv(e, env); ok {
+					fmt.Println("Setting field from env", name, field, e)
 					options[name] = []string{v}
 					break
 				}
