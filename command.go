@@ -192,11 +192,14 @@ func (cmd *CommandFunc) Call(ctx context.Context, args, env []string) (int, erro
 		return 1, err
 	}
 
+	fmt.Println("Calling", options, values, command, env)
+
 	if wantHelp(options) {
 		return 0, &Help{Cmd: cmd}
 	}
 
 	for name, field := range cmd.options {
+		fmt.Println("Processing item", name, field)
 		if _, ok := options[name]; !ok && len(field.envvars) != 0 {
 			for _, e := range field.envvars {
 				if v, ok := lookupEnv(e, env); ok {
