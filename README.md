@@ -216,7 +216,10 @@ import (
 )
 
 func main() {
-	one := cli.Command(func() {
+	type oneConfig struct {
+		_ struct{} `help:"Usage text for command one"`
+	}
+	one := cli.Command(func(cfg oneConfig) {
 		fmt.Println("1")
 	})
 
