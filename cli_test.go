@@ -172,10 +172,10 @@ func ExampleCommand_time() {
 	})
 
 	cli.Call(cmd)
-	cli.Call(cmd, "-f=Mon, 02 Jan 2006 15:04:05 PST")
-	cli.Call(cmd, "--flag=Mon, 02 Jan 2006 15:04:05 PST")
-	cli.Call(cmd, "-f", "Mon, 02 Jan 2006 15:04:05 PST")
-	cli.Call(cmd, "--flag", "Mon, 02 Jan 2006 15:04:05 PST")
+	cli.Call(cmd, "-f=Mon, 02 Jan 2006 15:04:05 UTC")
+	cli.Call(cmd, "--flag=Mon, 02 Jan 2006 15:04:05 UTC")
+	cli.Call(cmd, "-f", "Mon, 02 Jan 2006 15:04:05 UTC")
+	cli.Call(cmd, "--flag", "Mon, 02 Jan 2006 15:04:05 UTC")
 
 	// Output:
 	//-62135596800
