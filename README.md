@@ -227,9 +227,17 @@ func main() {
 		fmt.Println("2")
 	})
 
-	three := cli.Command(func() {
-		fmt.Println("3")
-	})
+	three := cli.CommandSet{
+        "_": cli.CommandFunc{
+            Help: "Usage text for the command three",
+        },
+        "four": cli.Command(func() {
+            fmt.Println("4")
+        }),
+        "five": cli.Command(func() {
+            fmt.Println("4")
+        }),
+	}
 
 	cli.Exec(cli.CommandSet{
 		"one":   one,
@@ -240,13 +248,12 @@ func main() {
 ```
 ```
 $ ./example5 --help
-
 Usage:
   example5 [command] [-h] [--help] ...
 
 Commands:
-  one
-  three
+  one    Usage text for command one
+  three  Usage text for the 'three' command
   two
 
 Options:

@@ -407,6 +407,45 @@ func ExampleCommandSet() {
 	// that
 }
 
+func ExampleCommandSet_usage_text() {
+	help := cli.Command(func() {
+		fmt.Println("help")
+	})
+
+	doc := cli.Command(func() {
+		fmt.Println("doc")
+	})
+
+	cover := cli.Command(func() {
+		fmt.Println("cover")
+	})
+
+	cmd := cli.CommandSet{
+		"help": help,
+		"tool": cli.CommandSet{
+			"_": &cli.CommandFunc{
+				Help: "run specified go tool",
+			},
+			"cover": cover,
+			"doc":   doc,
+		},
+	}
+
+	cli.Err = os.Stdout
+	cli.Call(cmd, "--help")
+
+	// Output:
+	// Usage:
+	//   [command] [-h] [--help] ...
+	//
+	// Commands:
+	//   help
+	//   tool  run specified go tool
+	//
+	// Options:
+	//   -h, --help  Show this help message
+}
+
 func ExampleCommandSet_option_before_command() {
 	type config struct {
 		String string `flag:"-f,--flag" default:"-"`

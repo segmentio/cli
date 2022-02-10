@@ -43,7 +43,7 @@ import (
 // The "flag" struct tag is a comma-separated list of command line flags that
 // map to the field. This tag is required.
 //
-// The "help" struct tag is a human-redable message describing what the field is
+// The "help" struct tag is a human-readable message describing what the field is
 // used for.
 //
 // The "default" struct tag provides the default value of the field when the
@@ -327,7 +327,7 @@ func (cmd *CommandFunc) Call(ctx context.Context, args, env []string) (int, erro
 	return ret, err
 }
 
-// Format statisfies the fmt.Formatter interface, its recognizes the following
+// Format satisfies the fmt.Formatter interface. It recognizes the following
 // verbs:
 //
 //	%s	outputs the usage information of the command
@@ -410,7 +410,7 @@ func (cmd *CommandFunc) Format(w fmt.State, v rune) {
 			// This counter is used to track how many short and long flags have
 			// been written.
 			//
-			// Short flags are printed first, then long flags. Empty columes are
+			// Short flags are printed first, then long flags. Empty columns are
 			// written between short and long flags to align fields.
 			n := 0
 
@@ -452,7 +452,13 @@ func (cmd *CommandFunc) Format(w fmt.State, v rune) {
 		}
 
 	case 'x': // help
-		io.WriteString(w, cmd.help)
+		if cmd.help != "" {
+			io.WriteString(w, cmd.help)
+		} else if cmd.Help != "" {
+			// if we're asking for help text, we may not have called configure()
+			// on this CommandFunc yet
+			io.WriteString(w, cmd.Help)
+		}
 	}
 }
 
@@ -547,7 +553,7 @@ func (cmds CommandSet) Call(ctx context.Context, args, env []string) (int, error
 	return NamedCommand(a, c).Call(ctx, args, env)
 }
 
-// Format writes a human-redable representation of cmds to w, using v as the
+// Format writes a human-readable representation of cmds to w, using v as the
 // formatting verb to determine which property of the command set should be
 // written.
 //
@@ -584,7 +590,15 @@ func (cmds CommandSet) Format(w fmt.State, v rune) {
 
 		for _, cmd := range sortedMapKeys(reflect.ValueOf(cmds)) {
 			cmdKey := cmd.String()
-			fmt.Fprintf(tw, "  %s\t  %x\n", cmdKey, cmds[cmdKey])
+			fmt.Fprintf(tw, "  %s\t", cmdKey)
+			// Avoid printing the whitespace if there's no value - makes it
+			// easier to write tests against with text editors that
+			// strip extraneous whitespace from the ends of lines.
+			val := fmt.Sprintf("%x", cmds[cmdKey])
+			if val != "" {
+				io.WriteString(tw, "  "+val)
+			}
+			tw.Write([]byte{'\n'})
 		}
 
 		tw.Flush()
@@ -592,6 +606,10 @@ func (cmds CommandSet) Format(w fmt.State, v rune) {
 Options:
   -h, --help  Show this help message
 `)
+	case 'x':
+		if cmd, ok := cmds["_"]; ok {
+			fmt.Fprintf(w, "%x", cmd)
+		}
 	}
 }
 
