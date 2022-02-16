@@ -115,6 +115,9 @@ func (cmd *CommandFunc) configure() {
 		return // already configured
 	}
 
+	if cmd.Func == nil {
+		panic(fmt.Sprintf("cli.Command: expected a function as argument but got nil (help text: %q, desc: %q)", cmd.Help, cmd.Desc))
+	}
 	t := reflect.TypeOf(cmd.Func)
 	v := reflect.ValueOf(cmd.Func)
 
@@ -508,8 +511,10 @@ type CommandSet map[string]Function
 //
 // Call satisfies the Function interface.
 func (cmds CommandSet) Call(ctx context.Context, args, env []string) (int, error) {
-	for _, cmd := range cmds {
-		if c, ok := cmd.(interface{ configure() }); ok {
+	for cmdKey, cmd := range cmds {
+		c, canConfigure := cmd.(interface{ configure() })
+		// "_" is the special key for printing help - skip it
+		if canConfigure && cmdKey != "_" {
 			c.configure()
 		}
 	}
@@ -590,13 +595,17 @@ func (cmds CommandSet) Format(w fmt.State, v rune) {
 
 		for _, cmd := range sortedMapKeys(reflect.ValueOf(cmds)) {
 			cmdKey := cmd.String()
-			fmt.Fprintf(tw, "  %s\t", cmdKey)
+			if cmdKey == "_" {
+				// Short flag for help text, not a runnable command.
+				continue
+			}
+			fmt.Fprintf(tw, "  %s", cmdKey)
 			// Avoid printing the whitespace if there's no value - makes it
 			// easier to write tests against with text editors that
 			// strip extraneous whitespace from the ends of lines.
 			val := fmt.Sprintf("%x", cmds[cmdKey])
 			if val != "" {
-				io.WriteString(tw, "  "+val)
+				io.WriteString(tw, "\t  "+val)
 			}
 			tw.Write([]byte{'\n'})
 		}

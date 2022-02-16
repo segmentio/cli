@@ -1,10 +1,12 @@
 package cli_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/url"
 	"os"
+	"testing"
 	"time"
 
 	"github.com/segmentio/cli"
@@ -444,6 +446,48 @@ func ExampleCommandSet_usage_text() {
 	//
 	// Options:
 	//   -h, --help  Show this help message
+}
+
+func TestCommandSetUsage(t *testing.T) {
+	doc := cli.Command(func() {
+		fmt.Println("doc")
+	})
+
+	cover := cli.Command(func() {
+		fmt.Println("cover")
+	})
+
+	cmd := cli.CommandSet{
+		"tool": cli.CommandSet{
+			"_": &cli.CommandFunc{
+				Help: "run specified go tool",
+			},
+			"cover": cover,
+			"doc":   doc,
+		},
+	}
+	var buf bytes.Buffer
+	cli.Err = &buf
+	cli.Call(cmd, "tool")
+	want := `
+Usage:
+  tool [command] [-h] [--help] ...
+
+Commands:
+  cover
+  doc
+
+Options:
+  -h, --help  Show this help message
+
+Error:
+  missing command
+
+
+`
+	if buf.String() != want {
+		t.Errorf("subcommand: got\n%q\n\n want\n%q", buf.String(), want)
+	}
 }
 
 func ExampleCommandSet_option_before_command() {
