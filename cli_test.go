@@ -726,3 +726,13 @@ func ExampleCommand_embedded_struct() {
 	// a B
 	// A B
 }
+
+func TestHelpFormat(t *testing.T) {
+	var c cli.Help
+	got := fmt.Sprintf("%#v", c)
+	if want := "cli.Help{Cmd:cli.Function(nil)}"; got != want {
+		// this is not going to be the most useful when it's also got format
+		// strings, but probably better than nothing...
+		t.Errorf("Sprintf(%%#v, cli.Help{}): got %q, want %q", got, want)
+	}
+}
