@@ -86,7 +86,8 @@ func CallContext(ctx context.Context, cmd Function, args ...string) int {
 		fmt.Fprintln(Err, err)
 	default:
 		if err != nil {
-			log.Print(err)
+			errorLogger := log.New(Err, "", log.LstdFlags)
+			errorLogger.Print(err)
 			code = 1
 		}
 	}
