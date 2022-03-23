@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -487,6 +488,21 @@ Error:
 `
 	if buf.String() != want {
 		t.Errorf("subcommand: got\n%q\n\n want\n%q", buf.String(), want)
+	}
+}
+
+func TestLevenshtein(t *testing.T) {
+	cmd := cli.CommandSet{
+		"spans":  nil,
+		"traces": nil,
+		"values": nil,
+	}
+	var buf bytes.Buffer
+	cli.Err = &buf
+	cli.Call(cmd, "span")
+	want := `unknown command: "span". Did you mean "spans"`
+	if !strings.Contains(buf.String(), want) {
+		t.Errorf("levenshtein: should have gotten cmd suggestion, got %q", buf.String())
 	}
 }
 

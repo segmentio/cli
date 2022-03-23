@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -552,10 +553,41 @@ func (cmds CommandSet) Call(ctx context.Context, args, env []string) (int, error
 	}
 
 	if c = cmds[a]; c == nil {
-		return 1, &Usage{Cmd: cmds, Err: fmt.Errorf("unknown command: %q", a)}
+		minLevenshtein := 1000
+		closestCommand := ""
+		for cmd := range cmds {
+			score := levenshtein(a, cmd)
+			if score < minLevenshtein {
+				closestCommand = cmd
+				minLevenshtein = score
+			}
+		}
+		errMessage := fmt.Sprintf("unknown command: %q", a)
+		if similarEnough(a, closestCommand, minLevenshtein) {
+			errMessage += fmt.Sprintf(". Did you mean %q? Use --help to see all commands",
+				closestCommand)
+			return 1, errors.New(errMessage)
+		}
+		return 1, &Usage{Cmd: cmds, Err: errors.New(errMessage)}
 	}
 
 	return NamedCommand(a, c).Call(ctx, args, env)
+}
+
+// similarEnough determines if input and want are similar enough. If input and
+// want are 2 characters, we maybe don't want to issue a suggestion because
+// you're changing 50% of the word. But longer words a Levenshtein distance of
+// 2 is probably good.
+func similarEnough(input, want string, levenshtein int) bool {
+	if len(input) <= 1 || len(want) <= 1 {
+		return false
+	}
+	if len(input) <= 3 || len(want) <= 3 {
+		return levenshtein <= 1
+	}
+	frac := float64(levenshtein) / float64(len(want))
+	// this allows 2 out of 7 letters off but forbids 2 out of 6
+	return frac <= 0.3
 }
 
 // Format writes a human-readable representation of cmds to w, using v as the
