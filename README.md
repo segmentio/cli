@@ -32,7 +32,7 @@ command line programs.
 ## Command Line Interface
 
 This section contains a couple of examples that showcase the features of the
-package.
+package. (For more, see the "examples" directory.)
 
 ### Flags
 
@@ -58,6 +58,7 @@ func main() {
 	}))
 }
 ```
+
 ```
 $ ./example1 --help
 
@@ -69,6 +70,7 @@ Options:
   -n, --name string  Someone's name (default: Luke)
 
 ```
+
 ```
 $ ./example1 --name Han
 hello Han!
