@@ -101,12 +101,18 @@ type CommandFunc struct {
 	// See Command for details about the accepted signatures.
 	Func interface{}
 
-	// An optional usage string for this function. If set, then this replaces the
+	// An optional usage string for this function. If set, then this replaces
 	// the default one that shows the types (but not names) of arguments.
 	Usage string
 
 	// Set of options to not set from the environment
-	IgnoreEnvOptions map[string]struct{}
+	// more user-friendly-syntax
+	IgnoreEnvOptions []string
+
+	// Set of options to not set from the environment
+	// This is to convert IgnoreEnvOptions field to a map
+	// for efficient lookups
+	IgnoreEnvOptionsMap map[string]struct{}
 
 	function reflect.Value
 	parser   parser
@@ -173,11 +179,15 @@ func (cmd *CommandFunc) configure() {
 	case 0:
 	case 1:
 		if r0 := t.Out(0); r0 != errorType {
-			panic("cli.Command: expected a function returning (error) but got (" + r0.String() + ")")
+			panic(
+				"cli.Command: expected a function returning (error) but got (" + r0.String() + ")",
+			)
 		}
 	case 2:
 		if r0, r1 := t.Out(0), t.Out(1); r0 != intType || r1 != errorType {
-			panic("cli.Command: expected a function returing (int, error) but got (" + r0.String() + ", " + r1.String() + ")")
+			panic(
+				"cli.Command: expected a function returing (int, error) but got (" + r0.String() + ", " + r1.String() + ")",
+			)
 		}
 	default:
 		panic("cli.Command: the function returns too many values")
@@ -203,11 +213,20 @@ func (cmd *CommandFunc) Call(ctx context.Context, args, env []string) (int, erro
 		return 0, &Help{Cmd: cmd}
 	}
 
+	// If user chooses to pass in IgnoreEnvOptionsMap instead of IgnoreEnvOptions
+	// we do not reset it
+	if cmd.IgnoreEnvOptionsMap == nil {
+		cmd.IgnoreEnvOptionsMap = make(map[string]struct{})
+	}
+	// Convert list to string for a faster look up
+	for _, name := range cmd.IgnoreEnvOptions {
+		cmd.IgnoreEnvOptionsMap[name] = struct{}{}
+	}
+
 	for name, field := range cmd.options {
-		if cmd.IgnoreEnvOptions != nil {
-			if _, ok := cmd.IgnoreEnvOptions[name]; ok {
-				continue
-			}
+
+		if _, ok := cmd.IgnoreEnvOptionsMap[name]; ok {
+			continue
 		}
 
 		if _, ok := options[name]; !ok && len(field.envvars) != 0 {
@@ -385,7 +404,10 @@ func (cmd *CommandFunc) Format(w fmt.State, v rune) {
 
 	case 'v': // description
 		if w.Flag('#') {
-			io.WriteString(w, strings.Replace(cmd.function.Type().String(), "func", "cli.Command", 1))
+			io.WriteString(
+				w,
+				strings.Replace(cmd.function.Type().String(), "func", "cli.Command", 1),
+			)
 			return
 		}
 
