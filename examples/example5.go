@@ -7,7 +7,10 @@ import (
 )
 
 func main() {
-	one := cli.Command(func() {
+	type oneConfig struct {
+		_ struct{} `help:"Usage text for command one"`
+	}
+	one := cli.Command(func(cfg oneConfig) {
 		fmt.Println("1")
 	})
 
@@ -15,9 +18,17 @@ func main() {
 		fmt.Println("2")
 	})
 
-	three := cli.Command(func() {
-		fmt.Println("3")
-	})
+	three := cli.CommandSet{
+		"_": &cli.CommandFunc{
+			Help: "Usage text for the 'three' command",
+		},
+		"four": cli.Command(func() {
+			fmt.Println("4")
+		}),
+		"five": cli.Command(func() {
+			fmt.Println("4")
+		}),
+	}
 
 	cli.Exec(cli.CommandSet{
 		"one":   one,

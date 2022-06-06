@@ -86,7 +86,8 @@ func CallContext(ctx context.Context, cmd Function, args ...string) int {
 		fmt.Fprintln(Err, err)
 	default:
 		if err != nil {
-			log.Print(err)
+			errorLogger := log.New(Err, "", log.LstdFlags)
+			errorLogger.Print(err)
 			code = 1
 		}
 	}
@@ -114,14 +115,33 @@ type Help struct {
 	Cmd Function
 }
 
+// Fallback for unimplemented fmt verbs
+type fmtHelp struct{ cmd Function }
+
 // Error satisfies the error interface.
 func (h *Help) Error() string { return fmt.Sprintf("help: %s", h.Cmd) }
 
 // Format satisfies the fmt.Formatter interface, print the help message for the
 // command carried by h.
-func (h *Help) Format(w fmt.State, _ rune) {
-	printUsage(w, h.Cmd)
-	printHelp(w, h.Cmd)
+func (h *Help) Format(w fmt.State, v rune) {
+	switch v {
+	case 's':
+		printUsage(w, h.Cmd)
+		printHelp(w, h.Cmd)
+	case 'v':
+		if w.Flag('#') {
+			io.WriteString(w, "cli.Help{")
+			fmt.Fprintf(w, "%#v", h.Cmd)
+			io.WriteString(w, "}")
+			return
+		}
+		printUsage(w, h.Cmd)
+		printHelp(w, h.Cmd)
+	default:
+		// fall back to default struct formatter. TODO this does not handle
+		// flags
+		fmt.Fprintf(w, "%"+string(v), fmtHelp{h.Cmd})
+	}
 }
 
 // Usage values are returned by commands to indicate that the combination of

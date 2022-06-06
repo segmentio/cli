@@ -1,10 +1,13 @@
 package cli_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
+	"testing"
 	"time"
 
 	"github.com/segmentio/cli"
@@ -172,10 +175,10 @@ func ExampleCommand_time() {
 	})
 
 	cli.Call(cmd)
-	cli.Call(cmd, "-f=Mon, 02 Jan 2006 15:04:05 PST")
-	cli.Call(cmd, "--flag=Mon, 02 Jan 2006 15:04:05 PST")
-	cli.Call(cmd, "-f", "Mon, 02 Jan 2006 15:04:05 PST")
-	cli.Call(cmd, "--flag", "Mon, 02 Jan 2006 15:04:05 PST")
+	cli.Call(cmd, "-f=Mon, 02 Jan 2006 15:04:05 UTC")
+	cli.Call(cmd, "--flag=Mon, 02 Jan 2006 15:04:05 UTC")
+	cli.Call(cmd, "-f", "Mon, 02 Jan 2006 15:04:05 UTC")
+	cli.Call(cmd, "--flag", "Mon, 02 Jan 2006 15:04:05 UTC")
 
 	// Output:
 	//-62135596800
@@ -405,6 +408,102 @@ func ExampleCommandSet() {
 	// help
 	// this
 	// that
+}
+
+func ExampleCommandSet_usage_text() {
+	help := cli.Command(func() {
+		fmt.Println("help")
+	})
+
+	doc := cli.Command(func() {
+		fmt.Println("doc")
+	})
+
+	cover := cli.Command(func() {
+		fmt.Println("cover")
+	})
+
+	cmd := cli.CommandSet{
+		"help": help,
+		"tool": cli.CommandSet{
+			"_": &cli.CommandFunc{
+				Help: "run specified go tool",
+			},
+			"cover": cover,
+			"doc":   doc,
+		},
+	}
+
+	cli.Err = os.Stdout
+	cli.Call(cmd, "--help")
+
+	// Output:
+	// Usage:
+	//   [command] [-h] [--help] ...
+	//
+	// Commands:
+	//   help
+	//   tool  run specified go tool
+	//
+	// Options:
+	//   -h, --help  Show this help message
+}
+
+func TestCommandSetUsage(t *testing.T) {
+	doc := cli.Command(func() {
+		fmt.Println("doc")
+	})
+
+	cover := cli.Command(func() {
+		fmt.Println("cover")
+	})
+
+	cmd := cli.CommandSet{
+		"tool": cli.CommandSet{
+			"_": &cli.CommandFunc{
+				Help: "run specified go tool",
+			},
+			"cover": cover,
+			"doc":   doc,
+		},
+	}
+	var buf bytes.Buffer
+	cli.Err = &buf
+	cli.Call(cmd, "tool")
+	want := `
+Usage:
+  tool [command] [-h] [--help] ...
+
+Commands:
+  cover
+  doc
+
+Options:
+  -h, --help  Show this help message
+
+Error:
+  missing command
+
+
+`
+	if buf.String() != want {
+		t.Errorf("subcommand: got\n%q\n\n want\n%q", buf.String(), want)
+	}
+}
+
+func TestLevenshtein(t *testing.T) {
+	cmd := cli.CommandSet{
+		"spans":  nil,
+		"traces": nil,
+		"values": nil,
+	}
+	var buf bytes.Buffer
+	cli.Err = &buf
+	cli.Call(cmd, "span")
+	want := `unknown command: "span". Did you mean "spans"`
+	if !strings.Contains(buf.String(), want) {
+		t.Errorf("levenshtein: should have gotten cmd suggestion, got %q", buf.String())
+	}
 }
 
 func ExampleCommandSet_option_before_command() {
@@ -642,4 +741,14 @@ func ExampleCommand_embedded_struct() {
 	// A b
 	// a B
 	// A B
+}
+
+func TestHelpFormat(t *testing.T) {
+	var c cli.Help
+	got := fmt.Sprintf("%#v", c)
+	if want := "cli.Help{Cmd:cli.Function(nil)}"; got != want {
+		// this is not going to be the most useful when it's also got format
+		// strings, but probably better than nothing...
+		t.Errorf("Sprintf(%%#v, cli.Help{}): got %q, want %q", got, want)
+	}
 }

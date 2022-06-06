@@ -32,7 +32,7 @@ command line programs.
 ## Command Line Interface
 
 This section contains a couple of examples that showcase the features of the
-package.
+package. (For more, see the "examples" directory.)
 
 ### Flags
 
@@ -58,6 +58,7 @@ func main() {
 	}))
 }
 ```
+
 ```
 $ ./example1 --help
 
@@ -69,6 +70,7 @@ Options:
   -n, --name string  Someone's name (default: Luke)
 
 ```
+
 ```
 $ ./example1 --name Han
 hello Han!
@@ -216,7 +218,10 @@ import (
 )
 
 func main() {
-	one := cli.Command(func() {
+	type oneConfig struct {
+		_ struct{} `help:"Usage text for command one"`
+	}
+	one := cli.Command(func(cfg oneConfig) {
 		fmt.Println("1")
 	})
 
@@ -224,9 +229,17 @@ func main() {
 		fmt.Println("2")
 	})
 
-	three := cli.Command(func() {
-		fmt.Println("3")
-	})
+	three := cli.CommandSet{
+        "_": cli.CommandFunc{
+            Help: "Usage text for the command three",
+        },
+        "four": cli.Command(func() {
+            fmt.Println("4")
+        }),
+        "five": cli.Command(func() {
+            fmt.Println("4")
+        }),
+	}
 
 	cli.Exec(cli.CommandSet{
 		"one":   one,
@@ -237,13 +250,12 @@ func main() {
 ```
 ```
 $ ./example5 --help
-
 Usage:
   example5 [command] [-h] [--help] ...
 
 Commands:
-  one
-  three
+  one    Usage text for command one
+  three  Usage text for the 'three' command
   two
 
 Options:

@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -43,7 +44,7 @@ import (
 // The "flag" struct tag is a comma-separated list of command line flags that
 // map to the field. This tag is required.
 //
-// The "help" struct tag is a human-redable message describing what the field is
+// The "help" struct tag is a human-readable message describing what the field is
 // used for.
 //
 // The "default" struct tag provides the default value of the field when the
@@ -128,6 +129,9 @@ func (cmd *CommandFunc) configure() {
 		return // already configured
 	}
 
+	if cmd.Func == nil {
+		panic(fmt.Sprintf("cli.Command: expected a function as argument but got nil (help text: %q, desc: %q)", cmd.Help, cmd.Desc))
+	}
 	t := reflect.TypeOf(cmd.Func)
 	v := reflect.ValueOf(cmd.Func)
 
@@ -359,7 +363,7 @@ func (cmd *CommandFunc) Call(ctx context.Context, args, env []string) (int, erro
 	return ret, err
 }
 
-// Format statisfies the fmt.Formatter interface, its recognizes the following
+// Format satisfies the fmt.Formatter interface. It recognizes the following
 // verbs:
 //
 //	%s	outputs the usage information of the command
@@ -450,7 +454,7 @@ func (cmd *CommandFunc) Format(w fmt.State, v rune) {
 			// This counter is used to track how many short and long flags have
 			// been written.
 			//
-			// Short flags are printed first, then long flags. Empty columes are
+			// Short flags are printed first, then long flags. Empty columns are
 			// written between short and long flags to align fields.
 			n := 0
 
@@ -492,7 +496,13 @@ func (cmd *CommandFunc) Format(w fmt.State, v rune) {
 		}
 
 	case 'x': // help
-		io.WriteString(w, cmd.help)
+		if cmd.help != "" {
+			io.WriteString(w, cmd.help)
+		} else if cmd.Help != "" {
+			// if we're asking for help text, we may not have called configure()
+			// on this CommandFunc yet
+			io.WriteString(w, cmd.Help)
+		}
 	}
 }
 
@@ -542,8 +552,10 @@ type CommandSet map[string]Function
 //
 // Call satisfies the Function interface.
 func (cmds CommandSet) Call(ctx context.Context, args, env []string) (int, error) {
-	for _, cmd := range cmds {
-		if c, ok := cmd.(interface{ configure() }); ok {
+	for cmdKey, cmd := range cmds {
+		c, canConfigure := cmd.(interface{ configure() })
+		// "_" is the special key for printing help - skip it
+		if canConfigure && cmdKey != "_" {
 			c.configure()
 		}
 	}
@@ -581,13 +593,44 @@ func (cmds CommandSet) Call(ctx context.Context, args, env []string) (int, error
 	}
 
 	if c = cmds[a]; c == nil {
-		return 1, &Usage{Cmd: cmds, Err: fmt.Errorf("unknown command: %q", a)}
+		minLevenshtein := 1000
+		closestCommand := ""
+		for cmd := range cmds {
+			score := levenshtein(a, cmd)
+			if score < minLevenshtein {
+				closestCommand = cmd
+				minLevenshtein = score
+			}
+		}
+		errMessage := fmt.Sprintf("unknown command: %q", a)
+		if similarEnough(a, closestCommand, minLevenshtein) {
+			errMessage += fmt.Sprintf(". Did you mean %q? Use --help to see all commands",
+				closestCommand)
+			return 1, errors.New(errMessage)
+		}
+		return 1, &Usage{Cmd: cmds, Err: errors.New(errMessage)}
 	}
 
 	return NamedCommand(a, c).Call(ctx, args, env)
 }
 
-// Format writes a human-redable representation of cmds to w, using v as the
+// similarEnough determines if input and want are similar enough. If input and
+// want are 2 characters, we maybe don't want to issue a suggestion because
+// you're changing 50% of the word. But longer words a Levenshtein distance of
+// 2 is probably good.
+func similarEnough(input, want string, levenshtein int) bool {
+	if len(input) <= 1 || len(want) <= 1 {
+		return false
+	}
+	if len(input) <= 3 || len(want) <= 3 {
+		return levenshtein <= 1
+	}
+	frac := float64(levenshtein) / float64(len(want))
+	// this allows 2 out of 7 letters off but forbids 2 out of 6
+	return frac <= 0.3
+}
+
+// Format writes a human-readable representation of cmds to w, using v as the
 // formatting verb to determine which property of the command set should be
 // written.
 //
@@ -624,7 +667,19 @@ func (cmds CommandSet) Format(w fmt.State, v rune) {
 
 		for _, cmd := range sortedMapKeys(reflect.ValueOf(cmds)) {
 			cmdKey := cmd.String()
-			fmt.Fprintf(tw, "  %s\t  %x\n", cmdKey, cmds[cmdKey])
+			if cmdKey == "_" {
+				// Short flag for help text, not a runnable command.
+				continue
+			}
+			fmt.Fprintf(tw, "  %s", cmdKey)
+			// Avoid printing the whitespace if there's no value - makes it
+			// easier to write tests against with text editors that
+			// strip extraneous whitespace from the ends of lines.
+			val := fmt.Sprintf("%x", cmds[cmdKey])
+			if val != "" {
+				io.WriteString(tw, "\t  "+val)
+			}
+			tw.Write([]byte{'\n'})
 		}
 
 		tw.Flush()
@@ -632,6 +687,10 @@ func (cmds CommandSet) Format(w fmt.State, v rune) {
 Options:
   -h, --help  Show this help message
 `)
+	case 'x':
+		if cmd, ok := cmds["_"]; ok {
+			fmt.Fprintf(w, "%x", cmd)
+		}
 	}
 }
 
