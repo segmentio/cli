@@ -111,8 +111,7 @@ type CommandFunc struct {
 	IgnoreEnvOptions []string
 
 	// Set of options to not set from the environment
-	// This is to convert IgnoreEnvOptions field to a map
-	// for efficient lookups
+	// This is to convert IgnoreEnvOptions field to a map for efficient lookups
 	IgnoreEnvOptionsMap map[string]struct{}
 
 	function reflect.Value
