@@ -106,8 +106,7 @@ type CommandFunc struct {
 	// the default one that shows the types (but not names) of arguments.
 	Usage string
 
-	// Set of options to not set from the environment
-	// more user-friendly-syntax
+	// Set of options to not set from the environment more user-friendly-syntax
 	IgnoreEnvOptions []string
 
 	// Set of options to not set from the environment
