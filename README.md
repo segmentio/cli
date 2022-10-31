@@ -81,6 +81,36 @@ function implementing the command. The `segmentio/cli` package implements a
 calling convention which maps the program arguments to the arguments of the
 function being called.
 
+### Default Values
+
+The first example shows how to set a default value for a flag. If a flag is
+truly optional, then set its default value to "-"; when the flag isn't used, its
+field assumes its zero-value. When a flag does not have any default value
+defined, then it is required.
+
+```go
+type config struct {
+	// optional, default "Luke"
+	Name     string `flag:"-n,--name"     help:"Someone's name"        default:"Luke"`
+	// optional, no default
+	Planet   string `flag:"-p,--planet"   help:"Someone's home planet" default:"-"`
+	// required
+	Greeting string `flag:"-g,--greeting" help:"Greeting word, such as hello"`
+}
+```
+
+### Command Help Text
+
+When the struct used for flags contains a field named `_`, its "help" tag
+defines the command's own help message. The field type is ignored.
+
+```go
+type config struct {
+	_    struct{} `help:"Greets someone from a galaxy far, far away"`
+	Name string   `flag:"-n,--name" help:"Someone's name" default:"Luke"`
+}
+```
+
 ### Positional Arguments
 
 While the first argument of a command must always be a struct defining the set
@@ -91,17 +121,17 @@ loaded from positional arguments:
 package main
 
 import (
-    "fmt"
+	"fmt"
 
-    "github.com/segmentio/cli"
+	"github.com/segmentio/cli"
 )
 
 func main() {
-    type noflags struct{}
+	type noflags struct{}
 
-    cli.Exec(cli.Command(func(_ noflags, x, y int) {
-        fmt.Println(x + y)
-    }))
+	cli.Exec(cli.Command(func(_ noflags, x, y int) {
+		fmt.Println(x + y)
+	}))
 }
 ```
 ```
@@ -230,15 +260,15 @@ func main() {
 	})
 
 	three := cli.CommandSet{
-        "_": cli.CommandFunc{
-            Help: "Usage text for the command three",
-        },
-        "four": cli.Command(func() {
-            fmt.Println("4")
-        }),
-        "five": cli.Command(func() {
-            fmt.Println("4")
-        }),
+		"_": cli.CommandFunc{
+			Help: "Usage text for the command three",
+		},
+		"four": cli.Command(func() {
+			fmt.Println("4")
+		}),
+		"five": cli.Command(func() {
+			fmt.Println("4")
+		}),
 	}
 
 	cli.Exec(cli.CommandSet{
@@ -266,6 +296,9 @@ Options:
 $ ./example5 one
 1
 ```
+
+When the command set contains a value for the key `"_"`, its function value's
+"Help" value defines the command set's own help message.
 
 ## Environment Variables
 
@@ -304,13 +337,13 @@ var command = cli.Command(func(config config) {
 ```
 ```go
 func Example_noArguments() {
-    cli.Call(command)
-    // Output: hello Luke!
+	cli.Call(command)
+	// Output: hello Luke!
 }
 
 func Example_withArgument() {
-    cli.Call(command, "--name", "Han")
-    // Output: hello Han!
+	cli.Call(command, "--name", "Han")
+	// Output: hello Han!
 }
 ```
 
@@ -330,22 +363,22 @@ type config struct {
 }
 
 type result struct {
-    Name  string
-    Value int
+	Name  string
+	Value int
 }
 
 var command = cli.Command(func(config config) error {
-    p, err := cli.Format(config.Output, os.Stdout)
-    if err != nil {
-        return err
-    }
-    defer p.Flush()
+	p, err := cli.Format(config.Output, os.Stdout)
+	if err != nil {
+		return err
+	}
+	defer p.Flush()
 
-    ...
+	...
 
-    // Call p.Print one or more times to output content to stdout
-    //
-    // p.Print(v)
+	// Call p.Print one or more times to output content to stdout
+	//
+	// p.Print(v)
 })
 ```
 
