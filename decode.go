@@ -135,7 +135,11 @@ func forEachStructField(t reflect.Type, index []int, do func(structField)) {
 			panic("configuration struct contains unsupported field type: " + f.Name + " " + f.Type.String())
 		}
 
-		var flags = strings.Split(f.Tag.Get("flag"), ",")
+		var splitFlags = strings.Split(f.Tag.Get("flag"), ",")
+		flags := make([]string, len(splitFlags))
+		for i := range splitFlags {
+			flags[i] = strings.TrimSpace(splitFlags[i])
+		}
 		var envvars []string
 
 		switch env := f.Tag.Get("env"); env {
