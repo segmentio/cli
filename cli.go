@@ -27,7 +27,7 @@ type Function interface {
 // Exec delegate the program execution to cmd, then exits with the code returned
 // by the function call.
 //
-// A typeical use case is for Exec to be the last statement of the main function
+// A typical use case is for Exec to be the last statement of the main function
 // of a program:
 //
 //	func main() {
