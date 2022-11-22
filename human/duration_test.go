@@ -54,6 +54,16 @@ func TestDurationParse(t *testing.T) {
 	}
 }
 
+func TestDurationError(t *testing.T) {
+	_, err := ParseDuration("10")
+	if err == nil {
+		t.Fatal(err, "ParseDuration(10), expected error, got nil")
+	}
+	if want := "please include a unit ('weeks', 'h', 'm') in addition to the value (10.000000)"; err.Error() != want {
+		t.Errorf(`ParseDuration("10"), got %q, want %q`, err.Error(), want)
+	}
+}
+
 func TestDurationFormat(t *testing.T) {
 	for _, test := range []struct {
 		in  Duration

@@ -25,7 +25,6 @@
 //		BufferSize:  64 * KiB,
 //		RateLimit:   20 * PerSecond,
 //	}
-//
 package human
 
 import (
@@ -62,10 +61,15 @@ func countPrefixFunc(s string, f func(rune) bool) int {
 	var i int
 	var r rune
 
+	terminated := false
 	for i, r = range s {
 		if !f(r) {
+			terminated = true
 			break
 		}
+	}
+	if !terminated {
+		return i + 1
 	}
 
 	return i
@@ -86,7 +90,7 @@ func parseNextNumber(s string) (string, string) {
 	i += countPrefixFunc(s[i:], isSign) // - or +
 	i += countPrefixFunc(s[i:], unicode.IsDigit)
 
-	// decimal part
+	// Count all of the digits after the decimal (if one exists)
 	if hasPrefixFunc(s[i:], isDot) {
 		i++ // .
 		i += countPrefixFunc(s[i:], unicode.IsDigit)
@@ -116,6 +120,8 @@ func parseNextToken(s string) (string, string) {
 	return s, ""
 }
 
+// parseFloat tries to parse a number at the beginning of s, and returns the
+// remainder as well as any error that occurs.
 func parseFloat(s string) (float64, string, error) {
 	s, r := parseNextNumber(s)
 	f, err := strconv.ParseFloat(s, 64)

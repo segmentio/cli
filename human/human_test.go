@@ -1,6 +1,8 @@
 package human
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestParseNextToken(t *testing.T) {
 	for _, test := range []struct {
@@ -34,5 +36,16 @@ func TestParseNextToken(t *testing.T) {
 				t.Errorf("tail mismatch: %q != %q", tail, test.tail)
 			}
 		})
+	}
+}
+
+func TestParseFloat(t *testing.T) {
+	in := "10"
+	n, _, err := parseFloat(in)
+	if err != nil {
+		t.Fatalf("parseFloat(%q): got %q, want nil", in, err)
+	}
+	if want := float64(10); n != want {
+		t.Fatalf("parseFloat(%q): got %f, want %f", in, n, want)
 	}
 }

@@ -60,12 +60,18 @@ func ParseDurationUntil(s string, now time.Time) (Duration, error) {
 	}
 
 	for len(s) != 0 {
+		// parse the next number
+
 		n, r, err := parseFloat(s)
 		if err != nil {
 			return 0, fmt.Errorf("malformed duration: %s: %w", input, err)
 		}
 		s = r
 
+		// parse "weeks", "days", "h", etc.
+		if s == "" {
+			return 0, fmt.Errorf("please include a unit ('weeks', 'h', 'm') in addition to the value (%f)", n)
+		}
 		v, r, err := parseDuration(s, n, now)
 		if err != nil {
 			return 0, fmt.Errorf("malformed duration: %s: %w", input, err)
@@ -176,9 +182,8 @@ func (d Duration) GoString() string {
 //
 // The 's' and 'v' formatting verbs also interpret the options:
 //
-//	+	outputs full names of the time units instead of abbreviations
-//	.	followed by a digit to limit the precision of the output
-//
+//   - outputs full names of the time units instead of abbreviations
+//     .	followed by a digit to limit the precision of the output
 func (d Duration) Format(w fmt.State, v rune) {
 	d.formatUntil(w, v, time.Now())
 }
