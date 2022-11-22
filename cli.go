@@ -66,7 +66,6 @@ func ExecContext(ctx context.Context, cmd Function) {
 //		// Output:
 //		// ...
 //	}
-//
 func Call(cmd Function, args ...string) int {
 	return CallContext(context.TODO(), cmd, args...)
 }
@@ -156,10 +155,22 @@ func (u *Usage) Error() string { return fmt.Sprintf("usage: %s: %s", u.Cmd, u.Er
 
 // Format satisfies the fmt.Formatter interface, print the usage message for the
 // command carried by u.
-func (u *Usage) Format(w fmt.State, _ rune) {
-	printUsage(w, u.Cmd)
-	printHelp(w, u.Cmd)
-	printError(w, u.Err)
+func (u *Usage) Format(w fmt.State, v rune) {
+	if v == 'v' && w.Flag('#') {
+		io.WriteString(w, "cli.Usage{")
+		fmt.Fprintf(w, "Cmd: %#v, ", u.Cmd)
+		fmt.Fprintf(w, "Err: %#v", u.Err)
+		io.WriteString(w, "}")
+		return
+	}
+	// TODO: better detection/printing based on the requested format string.
+	if u.Cmd != nil {
+		printUsage(w, u.Cmd)
+		printHelp(w, u.Cmd)
+	}
+	if u.Err != nil {
+		printError(w, u.Err)
+	}
 }
 
 // Unwrap satisfies the errors wrapper interface.

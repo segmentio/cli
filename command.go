@@ -277,6 +277,12 @@ func (cmd *CommandFunc) Call(ctx context.Context, args, env []string) (int, erro
 			// Configuration options are decoded into the first function parameter.
 			v := reflect.New(t.In(x)).Elem()
 			if err := cmd.options.decode(v, options); err != nil {
+				if uerr, ok := err.(*Usage); ok {
+					uerr.Cmd = cmd
+				}
+				if herr, ok := err.(*Help); ok {
+					herr.Cmd = cmd
+				}
 				return 1, err
 			}
 			params = append(params, v)
@@ -370,7 +376,6 @@ func (cmd *CommandFunc) Call(ctx context.Context, args, env []string) (int, erro
 //	%s	outputs the usage information of the command
 //	%v	outputs the full description of the command
 //	%x	outputs the help message of the command
-//
 func (cmd *CommandFunc) Format(w fmt.State, v rune) {
 	switch v {
 	case 's': // usage
@@ -542,7 +547,6 @@ func isLongFlag(s string) bool  { return strings.HasPrefix(s, "--") }
 //	$ program top sub-1
 //
 //	$ program top sub-2
-//
 type CommandSet map[string]Function
 
 // Call dispatches the given arguments and environment variables to the

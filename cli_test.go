@@ -3,6 +3,7 @@ package cli_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -750,5 +751,23 @@ func TestHelpFormat(t *testing.T) {
 		// this is not going to be the most useful when it's also got format
 		// strings, but probably better than nothing...
 		t.Errorf("Sprintf(%%#v, cli.Help{}): got %q, want %q", got, want)
+	}
+}
+
+func TestUsage(t *testing.T) {
+	u := cli.Usage{Err: errors.New("this is an error")}
+	got := fmt.Sprintf("%s", &u)
+	want := "\nError:\n  this is an error\n\n"
+	if got != want {
+		t.Errorf("Sprintf(%%#v, got %q, want %q", got, want)
+	}
+}
+
+func TestUsageFmt(t *testing.T) {
+	u := cli.Usage{Err: errors.New("this is an error")}
+	got := fmt.Sprintf("%#v", &u)
+	want := `cli.Usage{Cmd: <nil>, Err: &errors.errorString{s:"this is an error"}}`
+	if got != want {
+		t.Errorf("Sprintf(%%#v, got %q, want %q", got, want)
 	}
 }
