@@ -10,11 +10,12 @@ func TestParseCommandLine(t *testing.T) {
 		options: map[string]option{
 			"-A":     {boolean: false},
 			"--bool": {boolean: true},
+			"-n":     {boolean: false},
 		},
 	}
 
 	args := []string{
-		"-A=1", "-A", "2", "--bool", "a", "b", "c", "--", "command", "line",
+		"-A=1", "-A", "2", "--bool", "-A", "-", "a", "b", "c", "--", "command", "line",
 	}
 
 	options, values, command, err := parser.parseCommandLine(args)
@@ -23,7 +24,7 @@ func TestParseCommandLine(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(options, map[string][]string{
-		"-A":     {"1", "2"},
+		"-A":     {"1", "2", "-"},
 		"--bool": {"true"},
 	}) {
 		t.Error("options mismatch:", options)

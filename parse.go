@@ -81,7 +81,7 @@ func (p parser) parseCommandLine(args []string) (options map[string][]string, va
 }
 
 func isOption(s string) bool {
-	return len(s) > 0 && s[0] == '-'
+	return len(s) > 1 && s[0] == '-'
 }
 
 func isCommandSeparator(s string) bool {

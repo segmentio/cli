@@ -8,7 +8,7 @@ import (
 type testStructType struct {
 	_        struct{} `help:"Greets someone from a galaxy far, far away"`
 	Name     string   `flag:"-n,--name" help:"Someone's name" default:"Luke"`
-  Surname  string   `flag:"-s, --surname, --last-name" help:"Someone's surname" default:"Skywalker"`
+	Surname  string   `flag:"-s, --surname, --last-name" help:"Someone's surname" default:"Skywalker"`
 	Planet   string   `flag:"-p,--planet" help:"Someone's home planet" env:"-" default:"-"`
 	darkside bool     `flag:"--dark,--dark-side" help:"True if friend of the Sith"`
 }
