@@ -27,4 +27,4 @@ jobs:
       run: go mod download
 
     - name: Test
-      run: go test -trimpath -race . ./human
+      run: make test
