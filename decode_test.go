@@ -11,6 +11,7 @@ type testStructType struct {
 	Surname  string   `flag:"-s, --surname, --last-name" help:"Someone's surname" default:"Skywalker"`
 	Planet   string   `flag:"-p,--planet" help:"Someone's home planet" env:"-" default:"-"`
 	darkside bool     `flag:"--dark,--dark-side" help:"True if friend of the Sith"`
+	Sibling  string   `flag:"--sibling" help:"Secret family member" hidden:"true"`
 }
 
 func TestForEachStructField(t *testing.T) {
@@ -20,6 +21,7 @@ func TestForEachStructField(t *testing.T) {
 	var foundName bool
 	var foundSurname bool
 	var foundPlanet bool
+	var foundSibling bool
 	forEachStructField(structType, nil, func(sf structField) {
 		if sf.typ.Kind() != reflect.String {
 			t.Errorf("Type of field expected to be string, got %s", sf.typ)
@@ -35,6 +37,9 @@ func TestForEachStructField(t *testing.T) {
 			if sf.defval != "Luke" {
 				t.Errorf("Incorrect default value for Name field: %s", sf.defval)
 			}
+			if sf.hidden {
+				t.Errorf("Incorrect hidden value for Name field: %t", sf.hidden)
+			}
 			foundName = true
 		case "Someone's surname":
 			if len(sf.flags) != 3 || sf.flags[0] != "-s" || sf.flags[1] != "--surname" || sf.flags[2] != "--last-name" {
@@ -45,6 +50,9 @@ func TestForEachStructField(t *testing.T) {
 			}
 			if sf.defval != "Skywalker" {
 				t.Errorf("Incorrect default value for Surname field: %s", sf.defval)
+			}
+			if sf.hidden {
+				t.Errorf("Incorrect hidden value for Surname field: %t", sf.hidden)
 			}
 			foundSurname = true
 		case "Someone's home planet":
@@ -57,7 +65,21 @@ func TestForEachStructField(t *testing.T) {
 			if sf.defval != "-" {
 				t.Errorf("Incorrect default value for Planet field: %s", sf.defval)
 			}
+			if sf.hidden {
+				t.Errorf("Incorrect hidden value for Planet field: %t", sf.hidden)
+			}
 			foundPlanet = true
+		case "Secret family member":
+			if len(sf.flags) != 1 || sf.flags[0] != "--sibling" {
+				t.Errorf("Incorrect flags for Sibling field: %v", sf.flags)
+			}
+			if len(sf.envvars) != 1 || sf.envvars[0] != "SIBLING" {
+				t.Errorf("Incorrect envvars for Sibling field: %v", sf.envvars)
+			}
+			if !sf.hidden {
+				t.Errorf("Incorrect hidden value for Sibling field: %t", sf.hidden)
+			}
+			foundSibling = true
 		default:
 			// _ should be skipped because it is command help
 			// darkside should be skipped because it is not exported
@@ -73,5 +95,8 @@ func TestForEachStructField(t *testing.T) {
 	}
 	if !foundPlanet {
 		t.Error("Failed to locate Planet field")
+	}
+	if !foundSibling {
+		t.Error("Failed to locate Sibling field")
 	}
 }

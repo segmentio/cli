@@ -39,7 +39,8 @@ import (
 //		...
 //	})
 //
-// Three keys are recognized in the struct tags: "flag", "help", and "default".
+// Four keys are recognized in the struct tags: "flag", "help", "default", and
+// "hidden".
 //
 // The "flag" struct tag is a comma-separated list of command line flags that
 // map to the field. This tag is required.
@@ -53,6 +54,9 @@ import (
 // the command, otherwise a usage error is returned. The special default value
 // "-" can be used to indicate that the option is not required and should assume
 // its zero-value when omitted.
+//
+// The "hidden" struct flag is a Boolean indicating if the field should be
+// excluded from help text, essentially making it undocumented.
 //
 // If the struct contains a field named `_`, the command will look for a "help"
 // struct tag to define its own help message. Note that the type of the field
@@ -438,6 +442,9 @@ func (cmd *CommandFunc) Format(w fmt.State, v rune) {
 		shortLen := 0
 
 		for _, field := range cmd.options {
+			if field.hidden {
+				continue
+			}
 			n := 0
 			for _, f := range field.flags {
 				if isShortFlag(f) {
@@ -453,9 +460,13 @@ func (cmd *CommandFunc) Format(w fmt.State, v rune) {
 		b.Grow(128)
 
 		for _, fieldName := range sortedMapKeys(reflect.ValueOf(cmd.options)) {
+			field := cmd.options[fieldName.String()]
+			if field.hidden {
+				continue
+			}
+
 			b.Reset()
 			b.WriteString("  ") // indent
-			field := cmd.options[fieldName.String()]
 
 			// This counter is used to track how many short and long flags have
 			// been written.
