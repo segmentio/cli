@@ -99,6 +99,16 @@ type config struct {
 }
 ```
 
+### Hidden Flags
+
+A hidden flag is not included in help text, making it undocumented but still
+usable.
+
+```go
+	// optional, default "Leia", hidden
+	Sibling  string `flag:"-s,--sibling"  help:"Secret family member"  default:"Leia" hidden:"true"`
+```
+
 ### Command Help Text
 
 When the struct used for flags contains a field named `_`, its "help" tag

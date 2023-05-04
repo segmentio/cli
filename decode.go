@@ -39,6 +39,7 @@ type structFieldDecoder struct {
 	help    string
 	argtyp  string
 	defval  string
+	hidden  bool
 	boolean bool
 	slice   bool
 	decode  decodeFunc
@@ -103,6 +104,7 @@ func makeStructFieldDecoder(f structField) structFieldDecoder {
 		envvars: f.envvars,
 		help:    f.help,
 		defval:  f.defval,
+		hidden:  f.hidden,
 		boolean: f.isBoolean(),
 		slice:   f.isSlice(),
 		decode:  decode,
@@ -155,6 +157,11 @@ func forEachStructField(t reflect.Type, index []int, do func(structField)) {
 			envvars = append(envvars, env)
 		}
 
+		hidden, err := strconv.ParseBool(f.Tag.Get("hidden"))
+		if err != nil {
+			hidden = false
+		}
+
 		do(structField{
 			typ:     f.Type,
 			index:   fieldIndex,
@@ -162,6 +169,7 @@ func forEachStructField(t reflect.Type, index []int, do func(structField)) {
 			flags:   flags,
 			help:    f.Tag.Get("help"),
 			defval:  f.Tag.Get("default"),
+			hidden:  hidden,
 		})
 	}
 }
@@ -437,6 +445,7 @@ type structField struct {
 	envvars []string
 	help    string
 	defval  string
+	hidden  bool
 }
 
 func (f structField) isBoolean() bool { return f.typ.Kind() == reflect.Bool }
