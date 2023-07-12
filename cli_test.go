@@ -292,7 +292,8 @@ func ExampleCommand_environment() {
 	}
 
 	// If you don't specify the name using NamedCommand, it defaults
-	// to the binary name.
+	// to the binary name. In this test, the name must correspond to the prefix
+	// of the environment variable.
 	cmd := cli.NamedCommand("prog", cli.Command(func(config config) {
 		fmt.Println(config.String)
 	}))

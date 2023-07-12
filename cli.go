@@ -109,7 +109,7 @@ func environ(prefix string) []string {
 
 // Help values are returned by commands to indicate to the caller that it was
 // called with a configuration that requested a help message rather than
-// executing the command.
+// executing the command. This type satisfies the error interface.
 type Help struct {
 	Cmd Function
 }
@@ -144,7 +144,8 @@ func (h *Help) Format(w fmt.State, v rune) {
 }
 
 // Usage values are returned by commands to indicate that the combination of
-// arguments and environment variables they were called with was invalid.
+// arguments and environment variables they were called with was invalid. This
+// type satisfies the error interface.
 type Usage struct {
 	Cmd Function
 	Err error

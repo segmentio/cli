@@ -20,14 +20,15 @@ import (
 // accepted.
 //
 // The function may receive no arguments, indicating that the program delegating
-// to the command is expeceted to be invoked with no arguments, for example:
+// to the command is expected to be invoked with no arguments, for example:
 //
 //	cmd := cli.Command(func() {
 //		...
 //	})
 //
-// If the function accepts arguments, the first argument must always be a struct
-// type, which describes the set of options that are accepted by the command:
+// If the function accepts arguments, the first argument (except for an optional
+// initial `context.Context`) must always be a struct type, which describes the
+// set of options that are accepted by the command:
 //
 //	// Struct tags are used to declare the flags accepted by the command.
 //	type config struct {
@@ -39,11 +40,16 @@ import (
 //		...
 //	})
 //
-// Four keys are recognized in the struct tags: "flag", "help", "default", and
-// "hidden".
+// Five keys are recognized in the struct tags: "flag", "env", "help",
+// "default", and "hidden".
 //
 // The "flag" struct tag is a comma-separated list of command line flags that
 // map to the field. This tag is required.
+//
+// The "env" struct tag optionally specifies the name of an environment variable
+// whose value may provide a field value. When the tag is not specified, then
+// environment variables corresponding to long command line flags may provide
+// field values. A tag value of "-" disables this default behavior.
 //
 // The "help" struct tag is a human-readable message describing what the field is
 // used for.
@@ -93,7 +99,7 @@ import (
 func Command(fn interface{}) Function { return &CommandFunc{Func: fn} }
 
 // CommandFunc is an implementation of the Function interface which calls out to
-// a function when invoked.
+// a nested function when invoked.
 type CommandFunc struct {
 	// A short help message describing what the command does.
 	Help string
@@ -561,10 +567,12 @@ func isLongFlag(s string) bool  { return strings.HasPrefix(s, "--") }
 type CommandSet map[string]Function
 
 // Call dispatches the given arguments and environment variables to the
-// sub-command named in args[0].
+// sub-command named in the first non-option value in args. Finding the command
+// separator "--" before a sub-command name results in an error.
 //
-// The method returns a *Help is the first argument is -h or --help,
-// and a usage error if the first argument did not match any sub-command.
+// The method returns a *Help (as an error) is the first argument is -h or
+// --help, and a usage error if the first argument did not match any
+// sub-command.
 //
 // Call satisfies the Function interface.
 func (cmds CommandSet) Call(ctx context.Context, args, env []string) (int, error) {
@@ -586,7 +594,7 @@ func (cmds CommandSet) Call(ctx context.Context, args, env []string) (int, error
 		return 0, &Help{Cmd: cmds}
 	}
 
-	var a string
+	var a string // command name
 	var c Function
 
 	for i, arg := range args {
@@ -710,17 +718,23 @@ Options:
 	}
 }
 
-// NamedCommand constructs a command which carries the named passed as argument
+// NamedCommand constructs a command which carries the name passed as argument
 // and delegate execution to cmd.
 func NamedCommand(name string, cmd Function) Function {
 	return &namedCommand{name: name, cmd: cmd}
 }
 
+// namedCommand is a command function associated with a command name. The
+// only purpose of the wrapper is to preserve the command name for output.
 type namedCommand struct {
 	name string
 	cmd  Function
 }
 
+// Call dispatches the given arguments and environment variables to the function
+// in this named sub-command.
+//
+// Call satisfies the Function interface.
 func (c *namedCommand) Call(ctx context.Context, args, env []string) (int, error) {
 	code, err := c.cmd.Call(ctx, args, env)
 	switch e := err.(type) {
@@ -755,6 +769,7 @@ func (c *namedCommand) Format(w fmt.State, v rune) {
 	}
 }
 
+// Name retrieves this command's name.
 func (c *namedCommand) Name() string {
 	return c.name
 }

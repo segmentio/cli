@@ -13,6 +13,10 @@ const uintSize = 32 << (^uint(0) >> 32 & 1)
 
 type decodeFunc func(reflect.Value, []string) error
 
+// structDecoder is a map of `structFieldDecoder` instances for all of the
+// fields in a struct, which is expected to represent the options for a CLI
+// command. Each map key is the final flag specified for the field, and each
+// corresponding value is the decoder for that field.
 type structDecoder map[string]structFieldDecoder
 
 func (s structDecoder) decode(value reflect.Value, options map[string][]string) error {
@@ -32,6 +36,8 @@ func (s structDecoder) decode(value reflect.Value, options map[string][]string) 
 	return nil
 }
 
+// structFieldDecoder collects together a `structField` with a decode function
+// appropriate for the field type.
 type structFieldDecoder struct {
 	index   []int
 	flags   []string
@@ -45,6 +51,15 @@ type structFieldDecoder struct {
 	decode  decodeFunc
 }
 
+// makeStructDecoder creates a parser and struct decoder based on the given
+// struct type, which is expected to represent the options for a command. The
+// decoder automatically includes an additional "--help" Boolean decoder.
+//
+// The returned parser is programmed with flag alternatives (aliases) and
+// additional metadata so that a command line can be parsed correctly.
+//
+// The final argument is the value of the "help" tag for the struct field named
+// "_", if it exists.
 func makeStructDecoder(t reflect.Type) (parser, structDecoder, string) {
 	p := makeParser()
 	s := structDecoder{
@@ -87,6 +102,8 @@ func makeStructDecoder(t reflect.Type) (parser, structDecoder, string) {
 	return p, s, ""
 }
 
+// makeStructFieldDecoder creates a decoder for a struct field, containing a
+// decode function appropriate for the field type.
 func makeStructFieldDecoder(f structField) structFieldDecoder {
 	var decode decodeFunc
 	switch f.typ.Kind() {
@@ -112,6 +129,20 @@ func makeStructFieldDecoder(f structField) structFieldDecoder {
 	}
 }
 
+// forEachStructField executes the provided function for every field in a type,
+// in index order. The index argument tracks the indices needed to retrieve a
+// field when calling `reflect.Value.FieldByIndex` on the top struct type; pass
+// `nil` when calling for that top type.
+//
+// The per-field function is not called for unexported fields or fields named
+// "_".
+//
+// Most struct field attributes are derived from the field's tags. In
+// particular, the value of `envvars` is computed from the `env` tag:
+// * If the tag is empty, `envvars` is a list of all long options, converted to
+//   environment variable name equivalents.
+// * If the tag is `-`, `envvars` is `nil`.
+// * Otherwise, `envvars` is only the single tag value.
 func forEachStructField(t reflect.Type, index []int, do func(structField)) {
 	for i, n := 0, t.NumField(); i < n; i++ {
 		f := t.Field(i)
@@ -174,10 +205,13 @@ func forEachStructField(t reflect.Type, index []int, do func(structField)) {
 	}
 }
 
+// envNameOf gets a environment variable name that is equivalent to the given
+// flag.
 func envNameOf(s string) string {
 	return strings.ToUpper(snakecase(flagNameOf(s)))
 }
 
+// flagNameOf gets the name of the given flag without prefixed hyphens.
 func flagNameOf(s string) string {
 	switch {
 	case strings.HasPrefix(s, "--"):
@@ -189,6 +223,8 @@ func flagNameOf(s string) string {
 	}
 }
 
+// makeValueDecoder returns a decode function for values of the given type, or
+// nil if the type isn't supported.
 func makeValueDecoder(t reflect.Type) decodeFunc {
 	switch t {
 	case durationType:
@@ -438,13 +474,24 @@ func decodeBinaryUnmarshaler(v reflect.Value, a []string) error {
 	return u.UnmarshalBinary(b)
 }
 
+// structField represents a single field in a struct, with its tag values parsed
+// out.
 type structField struct {
+	// typ is the field type.
 	typ     reflect.Type
+	// index is the index sequence for retrieving this field from its top-level
+	// struct using `Type.FieldByIndex`.
 	index   []int
+	// flags is the list of values for the field's `flag` tag.
 	flags   []string
+	// envvars is the list of environment variable names calculated from either
+	// the field's `flag` tag or its `env` tag.
 	envvars []string
+	// help is the value of the field's `help` tag.
 	help    string
+	// defval is the value of the field's `default` tag.
 	defval  string
+	// hidden is the value of the field's `hidden` tag.
 	hidden  bool
 }
 
