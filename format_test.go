@@ -47,11 +47,11 @@ func ExampleFormat_yaml() {
 
 	cli.Call(cmd)
 	// Output:
-	// value: 1
+	// value: "1"
 	// ---
-	// value: 2
+	// value: "2"
 	// ---
-	// value: 3
+	// value: "3"
 }
 
 func ExampleFormat_text_string() {
@@ -180,7 +180,7 @@ func ExampleFormatList_yaml() {
 
 	cli.Call(cmd)
 	// Output:
-	// - value: 1
-	// - value: 2
-	// - value: 3
+	// - value: "1"
+	// - value: "2"
+	// - value: "3"
 }

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	yaml "gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
 // Printer is an interface implemented for high-level printing formats.
@@ -45,7 +45,7 @@ type PrintFlusher interface {
 //	p.Print(v3)
 //
 // The package supports three formats: text, json, and yaml. All formats
-// einterpret the `json` struct tag to configure the names of the fields
+// interpret the `json` struct tag to configure the names of the fields
 // and the behavior of the formatting operation.
 //
 // The text format also interprets `fmt` tags as carrying the formatting
@@ -79,22 +79,37 @@ func (p jsonFormat) Print(v interface{}) {
 
 func (p jsonFormat) Flush() {}
 
-type yamlFormat struct{ *yaml.Encoder }
-
-func newYamlFormat(w io.Writer) yamlFormat {
-	return yamlFormat{yaml.NewEncoder(w)}
+type yamlFormat struct {
+	w          io.Writer
+	hasWritten bool
 }
 
-func (p yamlFormat) Print(v interface{}) {
+func newYamlFormat(w io.Writer) *yamlFormat {
+	return &yamlFormat{w, false}
+}
+
+func (p *yamlFormat) Print(v interface{}) {
 	b, _ := json.Marshal(normalizeValue(v))
-
 	var x interface{}
-	yaml.Unmarshal(b, &x)
+	dec := json.NewDecoder(bytes.NewReader(b))
+	dec.UseNumber()
+	dec.Decode(&x)
+	// this would do Go value → JSON → unmarshal to generic
+	// interface{} → marshal as YAML
 
-	p.Encode(x)
+	// This roundtrip through JSON is likely to ensure consistent field naming
+	// and structure before converting to YAML
+	if p.hasWritten {
+		io.WriteString(p.w, "---\n")
+	}
+
+	out, _ := yaml.Marshal(x)
+	p.w.Write(out)
+	p.hasWritten = true
+
 }
 
-func (p yamlFormat) Flush() { p.Close() }
+func (p *yamlFormat) Flush() {}
 
 type textFormat struct {
 	w  io.Writer
@@ -335,6 +350,7 @@ func newYamlFormatList(w io.Writer) *yamlFormatList {
 	f := &yamlFormatList{writer: w}
 	f.enc = json.NewEncoder(&f.buffer)
 	f.dec = json.NewDecoder(&f.buffer)
+	f.dec.UseNumber()
 	return f
 }
 
@@ -346,10 +362,8 @@ func (p *yamlFormatList) Print(v interface{}) {
 }
 
 func (p *yamlFormatList) Flush() {
-	e := yaml.NewEncoder(p.writer)
-	e.SetIndent(2)
-	e.Encode(p.values)
-	e.Close()
+	out, _ := yaml.Marshal(p.values)
+	p.writer.Write(out)
 	p.values = nil
 }
 
