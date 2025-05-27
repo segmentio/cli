@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	yaml "gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
 func TestBytesParse(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"math"
 	"strconv"
 
-	yaml "gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
 // Bytes represents a number of bytes.
@@ -134,7 +134,6 @@ func (b Bytes) GoString() string {
 //	b	base 10, with unit using 1000 factors
 //	s	base 10, with unit using 1024 factors (same as calling String)
 //	v	same as the 's' format, unless '#' is set to print the go value
-//
 func (b Bytes) Format(w fmt.State, v rune) {
 	io.WriteString(w, b.format(w, v))
 }
@@ -181,13 +180,13 @@ func (b *Bytes) UnmarshalJSON(j []byte) error {
 	return json.Unmarshal(j, (*uint64)(b))
 }
 
-func (b Bytes) MarshalYAML() (interface{}, error) {
-	return b.String(), nil
+func (b Bytes) MarshalYAML() ([]byte, error) {
+	return []byte(b.String()), nil
 }
 
-func (b *Bytes) UnmarshalYAML(y *yaml.Node) error {
+func (b *Bytes) UnmarshalYAML(data []byte) error {
 	var s string
-	if err := y.Decode(&s); err != nil {
+	if err := yaml.Unmarshal(data, &s); err != nil {
 		return err
 	}
 	p, err := ParseBytes(s)
@@ -219,8 +218,8 @@ var (
 	_ json.Marshaler   = Bytes(0)
 	_ json.Unmarshaler = (*Bytes)(nil)
 
-	_ yaml.Marshaler   = Bytes(0)
-	_ yaml.Unmarshaler = (*Bytes)(nil)
+	_ yaml.BytesMarshaler   = Bytes(0)
+	_ yaml.BytesUnmarshaler = (*Bytes)(nil)
 
 	_ encoding.TextMarshaler   = Bytes(0)
 	_ encoding.TextUnmarshaler = (*Bytes)(nil)
